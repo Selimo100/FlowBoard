@@ -1,7 +1,11 @@
 import type { APIRoute } from 'astro';
 import { SprintService } from '../../../lib/services/sprint.service';
+import { requireAuthApi } from '../../../lib/auth/guards';
 
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async (context) => {
+  const user = requireAuthApi(context);
+  if (user instanceof Response) return user;
+
   try {
     const sprints = await SprintService.getAllSprints();
     return new Response(JSON.stringify(sprints), {
@@ -16,9 +20,12 @@ export const GET: APIRoute = async () => {
   }
 };
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async (context) => {
+  const user = requireAuthApi(context);
+  if (user instanceof Response) return user;
+
   try {
-    const body = await request.json();
+    const body = await context.request.json();
     const { projectId, name, startDate, endDate } = body;
 
     if (!name || !projectId) {

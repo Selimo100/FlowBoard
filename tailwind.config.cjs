@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ["./src/**/*.{astro,html,js,jsx,ts,tsx,svelte}"],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -16,6 +17,8 @@ module.exports = {
           800: "#6f4950",
           900: "#51363d",
         },
+        "brand-gradient-start": "#9a8794",
+        "brand-gradient-end": "#f5d7b3",
 
         ink: {
           100: "#ededf0",

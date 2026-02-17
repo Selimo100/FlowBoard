@@ -1,0 +1,44 @@
+---
+import AppShell from "../components/layout/AppShell.astro";
+import { getSession } from "../lib/auth/session";
+import "../styles/global.css";
+
+const session = getSession(Astro.cookies);
+
+if (!session) {
+  return Astro.redirect("/login");
+}
+
+const user = session; // In real app, might fetch full user profile here
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>FlowBoard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../lib/theme.ts"></script>
+  </head>
+  <body
+    class="bg-surface-100 dark:bg-ink-900 text-ink-900 dark:text-ink-100 font-sans antialiased selection:bg-peach-200 selection:text-peach-900 transition-colors duration-200"
+  >
+    <AppShell user={user}>
+      <slot />
+    </AppShell>
+  </body>
+</html>
+
+<style is:global>
+  body {
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  }
+</style>

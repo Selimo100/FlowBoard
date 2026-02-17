@@ -1,10 +1,10 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import Welcome from "../components/Welcome.astro";
----
+import { getSession } from "../lib/auth/session";
 
-<Layout>
-  <div class="min-h-screen bg-peach-fog">
-    <Welcome />
-  </div>
-</Layout>
+const session = getSession(Astro.cookies);
+
+if (session) {
+  return Astro.redirect("/projects");
+}
+return Astro.redirect("/login");
+---

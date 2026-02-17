@@ -1,7 +1,11 @@
 import type { APIRoute } from 'astro';
 import { ProjectService } from '../../../lib/services/project.service';
+import { requireAuthApi } from '../../../lib/auth/guards';
 
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async (context) => {
+  const user = requireAuthApi(context);
+  if (user instanceof Response) return user;
+
   try {
     const projects = await ProjectService.getAllProjects();
     return new Response(JSON.stringify(projects), {
@@ -16,8 +20,28 @@ export const GET: APIRoute = async () => {
   }
 };
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async (context) => {
+  const user = requireAuthApi(context);
+  if (user instanceof Response) return user;
+
   try {
+    const body = await context.request.json();
+    const { name, description, repositoryUrl } = body;
+
+    const project = await ProjectService.createProject(name, description, repositoryUrl);
+    
+    return new Response(JSON.stringify(project), {
+      status: 201,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+};
+
     const body = await request.json();
     const { name, description } = body;
 

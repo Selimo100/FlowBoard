@@ -5,6 +5,7 @@ export interface Project {
   _id?: ObjectId;
   name: string;
   description?: string;
+  repositoryUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -9,9 +9,9 @@ export const ProjectService = {
     return await ProjectRepo.findById(id);
   },
 
-  async createProject(name: string, description?: string) {
+  async createProject(name: string, description?: string, repositoryUrl?: string) {
     if (!name) throw new Error('Project name is required');
-    return await ProjectRepo.create({ name, description });
+    return await ProjectRepo.create({ name, description, repositoryUrl });
   },
 
   async updateProject(id: string, data: Partial<Project>) {

@@ -25,7 +25,9 @@ export async function ensureIndexes() {
 // However, since we are in a module system, simpler is to just have a script file import and call it.
 // We'll rely on the dedicated script calling this function or this file being executed.
 
+/*
 // If executed directly by tsx as entry point
 if (import.meta.url === `file://${process.argv[1]}`) {
   ensureIndexes().catch(console.error);
 }
+*/

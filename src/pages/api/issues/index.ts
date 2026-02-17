@@ -1,7 +1,11 @@
 import type { APIRoute } from 'astro';
 import { IssueService } from '../../../lib/services/issue.service';
+import { requireAuthApi } from '../../../lib/auth/guards';
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async (context) => {
+  const user = requireAuthApi(context);
+  if (user instanceof Response) return user;
+
   try {
     // Basic filter support if needed, otherwise returns all
     // const projectId = url.searchParams.get('projectId');
