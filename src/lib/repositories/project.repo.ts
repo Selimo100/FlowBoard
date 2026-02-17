@@ -9,6 +9,7 @@ export interface Project {
   name: string;
   description?: string;
   repositoryUrl?: string;
+  isArchived?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -16,10 +17,11 @@ export interface Project {
 const COLLECTION = 'projects';
 
 export const ProjectRepo = {
-  async findAll(limit = 50) {
+  async findAll(includeArchived = false, limit = 50) {
     const db = await getDb();
+    const query = includeArchived ? {} : { isArchived: { $ne: true } };
     return db.collection<Project>(COLLECTION)
-      .find({})
+      .find(query)
       .sort({ createdAt: -1 })
       .limit(limit)
       .toArray();

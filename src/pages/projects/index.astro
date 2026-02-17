@@ -11,7 +11,9 @@ import Modal from "../../components/ui/Modal.astro";
 import Input from "../../components/ui/Input.astro";
 import { ProjectService } from "../../lib/services/project.service";
 
-const projects = await ProjectService.getAllProjects();
+const url = new URL(Astro.request.url);
+const showArchived = url.searchParams.get("archived") === "true";
+const projects = await ProjectService.getAllProjects(showArchived);
 ---
 
 <AppLayout>
@@ -20,11 +22,17 @@ const projects = await ProjectService.getAllProjects();
   >
     <div>
       <h1 class="text-3xl font-bold text-ink-900 dark:text-white mb-1">
-        Projects
+        {showArchived ? "Archived Projects" : "Projects"}
       </h1>
       <p class="text-ink-500 dark:text-ink-400">Manage your agile workspaces</p>
     </div>
-    <div class="flex gap-3">
+    <div class="flex gap-3 items-center">
+      <a
+        href={showArchived ? "/projects" : "/projects?archived=true"}
+        class="text-sm font-medium text-ink-500 hover:text-ink-900 dark:text-ink-400 dark:hover:text-white mr-2"
+      >
+        {showArchived ? "Show Active Projects" : "Show Archived"}
+      </a>
       <div class="relative">
         <input
           id="project-search"
@@ -96,10 +104,18 @@ const projects = await ProjectService.getAllProjects();
                 <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-peach-100 to-peach-50 flex items-center justify-center text-peach-600 font-bold text-lg shadow-inner">
                   {project.name.charAt(0).toUpperCase()}
                 </div>
-                <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  type="button"
+                  class="edit-project-btn opacity-0 group-hover:opacity-100 transition-opacity p-2 text-ink-400 hover:text-peach-600 dark:text-ink-500 dark:hover:text-peach-400 rounded-full hover:bg-peach-50 dark:hover:bg-ink-700 relative z-10"
+                  data-id={project._id}
+                  data-name={project.name}
+                  data-repo={project.repositoryUrl || ""}
+                  data-desc={project.description || ""}
+                  data-archived={project.isArchived ? "true" : "false"}
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5 text-ink-300 hover:text-ink-600"
+                    class="h-5 w-5 pointer-events-none"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -108,10 +124,10 @@ const projects = await ProjectService.getAllProjects();
                       stroke-linecap="round"
                       stroke-linejoin="round"
                       stroke-width="2"
-                      d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
                     />
                   </svg>
-                </div>
+                </button>
               </div>
 
               <h3 class="text-lg font-semibold text-ink-900 dark:text-white mb-2 truncate group-hover:text-peach-600 transition-colors">
@@ -122,7 +138,10 @@ const projects = await ProjectService.getAllProjects();
               </p>
 
               <div class="flex items-center justify-between border-t border-ink-50 dark:border-ink-700 pt-4 mt-auto">
-                <Badge label="Active" variant="success" />
+                <Badge
+                  label={project.isArchived ? "Archived" : "Active"}
+                  variant={project.isArchived ? "neutral" : "success"}
+                />
                 <span class="text-xs text-ink-400 dark:text-ink-500 font-medium">
                   Updated just now
                 </span>
@@ -157,6 +176,7 @@ const projects = await ProjectService.getAllProjects();
         <Button
           variant="ghost"
           type="button"
+          class="dark:text-ink-400"
           onclick="document.getElementById('create_project_modal').close()"
           >Cancel</Button
         >
@@ -164,11 +184,133 @@ const projects = await ProjectService.getAllProjects();
       </div>
     </form>
   </Modal>
+
+  <Modal id="edit_project_modal" title="Edit Project">
+    <form id="edit_project_form" class="space-y-6">
+      <input type="hidden" name="id" id="edit_project_id" />
+      <Input name="name" id="edit_project_name" label="Project Name" required />
+      <Input
+        name="repositoryUrl"
+        id="edit_project_repo"
+        label="Git Repository URL (Optional)"
+      />
+      <Input
+        name="description"
+        id="edit_project_desc"
+        label="Description (Optional)"
+      />
+
+      <div class="flex justify-between pt-2">
+        <Button
+          variant="ghost"
+          id="archive_project_btn"
+          type="button"
+          class="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+          onclick="toggleArchive()">Archive Project</Button
+        >
+        <div class="flex gap-2">
+          <Button
+            variant="ghost"
+            type="button"
+            class="dark:text-ink-400"
+            onclick="document.getElementById('edit_project_modal').close()"
+            >Cancel</Button
+          >
+          <Button type="submit">Save Changes</Button>
+        </div>
+      </div>
+    </form>
+  </Modal>
 </AppLayout>
+
+<script is:inline>
+  function openEditModal(id, name, repoUrl, desc, isArchived) {
+    const modal = document.getElementById("edit_project_modal");
+
+    // Populate form
+    document.getElementById("edit_project_id").value = id;
+    document.getElementById("edit_project_name").value = name;
+    document.getElementById("edit_project_repo").value = repoUrl || "";
+    document.getElementById("edit_project_desc").value = desc || "";
+
+    // Update archive button text
+    const archiveBtn = document.getElementById("archive_project_btn");
+    archiveBtn.innerText = isArchived ? "Restore Project" : "Archive Project";
+
+    // Store archive status
+    modal.dataset.isArchived = String(isArchived);
+
+    modal.showModal();
+  }
+
+  async function toggleArchive() {
+    const id = document.getElementById("edit_project_id").value;
+    const isArchived =
+      document.getElementById("edit_project_modal").dataset.isArchived ===
+      "true";
+
+    if (
+      !confirm(
+        isArchived
+          ? "Are you sure you want to restore this project?"
+          : "Are you sure you want to archive this project?",
+      )
+    )
+      return;
+
+    try {
+      const res = await fetch(`/api/projects/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isArchived: !isArchived }),
+      });
+      if (res.ok) window.location.reload();
+      else alert("Error updating project status");
+    } catch (err) {
+      console.error(err);
+      alert("Error updating project");
+    }
+  }
+</script>
 
 <script>
   const form = document.getElementById("create_project_form");
+  const editForm = document.getElementById("edit_project_form");
   const searchInput = document.getElementById("project-search");
+
+  // Handle Edit Button Clicks
+  document.querySelectorAll(".edit-project-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation(); // Crucial to prevent link navigation
+      const target = e.currentTarget as HTMLElement;
+      const { id, name, repo, desc, archived } = target.dataset;
+      // Call the global function exposed in the other script block
+      if (typeof (window as any).openEditModal === "function") {
+        (window as any).openEditModal(
+          id,
+          name,
+          repo,
+          desc,
+          archived === "true",
+        );
+      }
+    });
+  });
+
+  // Check for create action in URL
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get("action") === "create") {
+    const modal = document.getElementById(
+      "create_project_modal",
+    ) as HTMLDialogElement;
+    if (modal) {
+      modal.showModal();
+      // Clean up URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, "", newUrl);
+    }
+  }
 
   // Search functionality
   searchInput?.addEventListener("input", (e) => {
@@ -207,6 +349,32 @@ const projects = await ProjectService.getAllProjects();
     } catch (err) {
       console.error(err);
       alert("Error creating project");
+    }
+  });
+
+  editForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target as HTMLFormElement);
+    const data = Object.fromEntries(formData);
+    const id = data.id;
+
+    try {
+      const res = await fetch(`/api/projects/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        alert("Failed to update project");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error updating project");
     }
   });
 </script>

@@ -5,8 +5,8 @@
 import { ProjectRepo, type Project } from '../repositories/project.repo';
 
 export const ProjectService = {
-  async getAllProjects() {
-    return await ProjectRepo.findAll();
+  async getAllProjects(includeArchived = false) {
+    return await ProjectRepo.findAll(includeArchived);
   },
 
   async getProjectById(id: string) {

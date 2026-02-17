@@ -10,6 +10,7 @@ interface Props {
   value?: string;
   required?: boolean;
   class?: string;
+  id?: string;
 }
 
 const {
@@ -20,13 +21,14 @@ const {
   value,
   required = false,
   class: className,
+  id = name,
 } = Astro.props;
 ---
 
 <div class:list={["flex flex-col gap-2", className]}>
   {
     label && (
-      <label for={name} class="text-sm font-medium text-ink-500 ml-1">
+      <label for={id} class="text-sm font-medium text-ink-500 ml-1">
         {label}
       </label>
     )
@@ -34,7 +36,7 @@ const {
   <input
     type={type}
     name={name}
-    id={name}
+    id={id}
     placeholder={placeholder}
     value={value}
     required={required}
