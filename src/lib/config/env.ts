@@ -11,6 +11,8 @@ if (typeof import.meta !== 'undefined' && import.meta.env) {
 }
 
 if (!uri && typeof process !== 'undefined' && process.env) {
+  // Local: use docker-compose Mongo or local instance
+  // Render: this will be the connection string to MongoDB Atlas
   uri = process.env.MONGODB_URI;
   dbName = process.env.MONGODB_DB;
 }
