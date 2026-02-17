@@ -1,3 +1,6 @@
+// Explanation: This repository is responsible for direct database interactions for Projects.
+// It uses the MongoDB driver to find, insert, update, and delete project documents in the 'projects' collection.
+
 import { ObjectId } from 'mongodb';
 import { getDb } from '../db/mongo';
 
@@ -5,6 +8,8 @@ export interface Project {
   _id?: ObjectId;
   name: string;
   description?: string;
+  repositoryUrl?: string;
+  isArchived?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -12,10 +17,11 @@ export interface Project {
 const COLLECTION = 'projects';
 
 export const ProjectRepo = {
-  async findAll(limit = 50) {
+  async findAll(includeArchived = false, limit = 50) {
     const db = await getDb();
+    const query = includeArchived ? {} : { isArchived: { $ne: true } };
     return db.collection<Project>(COLLECTION)
-      .find({})
+      .find(query)
       .sort({ createdAt: -1 })
       .limit(limit)
       .toArray();

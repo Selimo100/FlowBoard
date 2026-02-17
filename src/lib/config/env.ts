@@ -11,6 +11,8 @@ if (typeof import.meta !== 'undefined' && import.meta.env) {
 }
 
 if (!uri && typeof process !== 'undefined' && process.env) {
+  // Local: use docker-compose Mongo or local instance
+  // Render: this will be the connection string to MongoDB Atlas
   uri = process.env.MONGODB_URI;
   dbName = process.env.MONGODB_DB;
 }
@@ -19,9 +21,11 @@ export const MONGODB_URI = uri;
 export const MONGODB_DB = dbName;
 
 if (!MONGODB_URI) {
+  console.error("MONGODB_URI is not defined in environment variables");
   throw new Error("MONGODB_URI is not defined in environment variables");
 }
 
 if (!MONGODB_DB) {
+  console.error("MONGODB_DB is not defined in environment variables");
   throw new Error("MONGODB_DB is not defined in environment variables");
 }

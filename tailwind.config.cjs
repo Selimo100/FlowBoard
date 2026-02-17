@@ -1,9 +1,29 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ["./src/**/*.{astro,html,js,jsx,ts,tsx,svelte}"],
+  darkMode: "class",
   theme: {
+    // Responsive Breakpoints - Mobile First Approach
+    screens: {
+      xs: "475px", // Extra small devices
+      sm: "640px", // Small devices (tablets)
+      md: "768px", // Medium devices (small laptops)
+      lg: "1024px", // Large devices (desktops)
+      xl: "1280px", // Extra large devices
+      "2xl": "1536px", // 2X Extra large devices
+    },
     extend: {
+      spacing: {
+        "container-mobile": "1rem", // 16px
+        "container-tablet": "1.5rem", // 24px
+        "container-desktop": "2rem", // 32px
+      },
       colors: {
+        // Primary brand colors from color palette
+        "sunrise-red": "#DA291C", // Pantone 485 C
+        "grey-dusk": "#3D3935", // Pantone Black 7 C
+        "pale-dawn": "#E6E3DF", // Pantone Warm Gray 1 C
+        "ice-white": "#FFFFFF", // Ice White
         peach: {
           50: "#fff7f2",
           100: "#fdeee6",
@@ -16,6 +36,8 @@ module.exports = {
           800: "#6f4950",
           900: "#51363d",
         },
+        "brand-gradient-start": "#9a8794",
+        "brand-gradient-end": "#f5d7b3",
 
         ink: {
           100: "#ededf0",
@@ -34,8 +56,7 @@ module.exports = {
       },
 
       backgroundImage: {
-        "peach-fog":
-          "linear-gradient(180deg, #9a8794 0%, #f5d7b3 100%)",
+        "peach-fog": "linear-gradient(180deg, #9a8794 0%, #f5d7b3 100%)",
       },
 
       boxShadow: {

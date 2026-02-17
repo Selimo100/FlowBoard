@@ -1,0 +1,64 @@
+---
+// Explanation: A reusable confirmation modal for dangerous actions (delete, archive, etc.).
+// It triggers a specific event on confirm that parent components can listen to.
+
+import Modal from "./Modal.astro";
+import Button from "./Button.astro";
+
+interface Props {
+  id: string;
+  title?: string;
+  message?: string;
+  confirmText?: string;
+  cancelText?: string;
+  confirmBtnClass?: string;
+}
+
+const {
+  id,
+  title = "Are you sure?",
+  message = "This action cannot be undone.",
+  confirmText = "Confirm",
+  cancelText = "Cancel",
+  confirmBtnClass = "bg-red-500 hover:bg-red-600 text-white",
+} = Astro.props;
+---
+
+<Modal id={id} title={title}>
+  <div class="space-y-6">
+    <p class="text-ink-600 dark:text-ink-300 text-base leading-relaxed">
+      {message}
+    </p>
+
+    <div class="flex justify-end gap-3 pt-2">
+      <Button
+        variant="ghost"
+        type="button"
+        id={`${id}_cancel_btn`}
+        class="dark:text-ink-400"
+      >
+        {cancelText}
+      </Button>
+      <Button type="button" id={`${id}_confirm_btn`} class={confirmBtnClass}>
+        {confirmText}
+      </Button>
+    </div>
+  </div>
+</Modal>
+
+<script define:vars={{ id }}>
+  const cancelBtn = document.getElementById(`${id}_cancel_btn`);
+  cancelBtn?.addEventListener("click", () => {
+    const modal = document.getElementById(id);
+    modal.close();
+  });
+
+  const confirmBtn = document.getElementById(`${id}_confirm_btn`);
+  confirmBtn?.addEventListener("click", () => {
+    // Dispatch a custom event attached to the modal element itself
+    const modal = document.getElementById(id);
+    const event = new CustomEvent("confirm", { bubble: true });
+    modal.dispatchEvent(event);
+    modal.close();
+  });
+</script>

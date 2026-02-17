@@ -1,0 +1,29 @@
+---
+// Explanation: A small visual component used to display status, tags, or categories (e.g., "Active", "Complete").
+// It supports different color variants like success (green), warning (amber), etc.
+
+interface Props {
+  label: string;
+  variant?: "neutral" | "success" | "warning" | "danger";
+}
+
+const { label, variant = "neutral" } = Astro.props;
+
+const variants = {
+  neutral: "bg-ink-100 text-ink-500 dark:bg-ink-800 dark:text-ink-400",
+  success:
+    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+  warning:
+    "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+  danger: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+};
+---
+
+<span
+  class:list={[
+    "px-3 py-1 rounded-full text-xs font-semibold tracking-wide",
+    variants[variant],
+  ]}
+>
+  {label}
+</span>

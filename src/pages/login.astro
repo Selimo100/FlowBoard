@@ -1,0 +1,76 @@
+---
+import AuthLayout from "../layouts/AuthLayout.astro";
+import Card from "../components/ui/Card.astro";
+import Input from "../components/ui/Input.astro";
+import Button from "../components/ui/Button.astro";
+import { getSession } from "../lib/auth/session";
+
+const session = getSession(Astro.cookies);
+if (session) {
+  return Astro.redirect("/projects");
+}
+
+let error = "";
+
+if (Astro.request.method === "POST") {
+  // If we are here, it means the API redirect didn't happen or client-side fetch handles it.
+  // But checking US03, it says "Use API: POST /api/auth/login".
+  // The form should post directly to that endpoint.
+}
+---
+
+<AuthLayout>
+  <Card
+    class="w-full max-w-md p-8 shadow-2xl rounded-3xl relative overflow-hidden"
+  >
+    <div
+      class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-brand-gradient-start to-brand-gradient-end"
+    >
+    </div>
+
+    <div class="mb-8 text-center">
+      <h1
+        class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-peach-600 to-peach-800"
+      >
+        Welcome Back
+      </h1>
+      <p class="text-ink-400 mt-2">Sign in to your FlowBoard account</p>
+    </div>
+
+    <form action="/api/auth/login" method="POST" class="space-y-6">
+      <Input
+        name="email"
+        type="email"
+        placeholder="you@company.com"
+        label="Email Address"
+        required
+      />
+      <Input
+        name="password"
+        type="password"
+        placeholder="••••••••"
+        label="Password"
+        required
+      />
+
+      {
+        error && (
+          <div class="p-3 bg-red-50 text-red-600 text-sm rounded-xl">
+            {error}
+          </div>
+        )
+      }
+
+      <Button type="submit" class="w-full shadow-lg shadow-peach-500/30">
+        Sign In
+      </Button>
+    </form>
+
+    <div class="mt-8 text-center text-sm text-ink-400">
+      Don't have an account? <a
+        href="#"
+        class="text-peach-600 font-medium hover:underline">Contact Admin</a
+      >
+    </div>
+  </Card>
+</AuthLayout>

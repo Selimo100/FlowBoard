@@ -1,0 +1,180 @@
+---
+// Explanation: This component renders the top navigation bar of the application.
+// It includes functionality for switching projects and handles basic user state display.
+// It fetches the list of available projects to populate the dropdown menu.
+
+import { ProjectService } from "../../lib/services/project.service";
+
+const { user } = Astro.locals as { user?: { email: string } };
+
+// Fetch projects for switcher
+let projects: any[] = [];
+try {
+  projects = await ProjectService.getAllProjects();
+} catch (e) {
+  // In case DB fails, empty array
+}
+
+// Current project detection (naive implementation based on URL or session)
+const url = new URL(Astro.request.url);
+const pathSegments = url.pathname.split("/");
+const currentProjectId = pathSegments[2]; // /projects/[id]
+const currentProject =
+  projects.find((p) => p._id.toString() === currentProjectId) || projects[0];
+---
+
+<header
+  class="h-20 bg-white dark:bg-ink-900 border-b border-ink-100 dark:border-ink-800 flex items-center justify-between px-6 sticky top-0 z-30 transition-shadow duration-200"
+  id="topbar"
+>
+  <div class="flex items-center gap-4">
+    <button
+      class="md:hidden p-2 text-ink-500 hover:bg-ink-100 dark:text-ink-400 dark:hover:bg-ink-800 rounded-xl"
+      onclick="document.getElementById('sidebar').classList.remove('-translate-x-full'); document.getElementById('sidebar-backdrop').classList.remove('hidden')"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.5"
+        stroke="currentColor"
+        class="w-6 h-6"
+        ><path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"></path></svg
+      >
+    </button>
+
+    <div class="flex items-center gap-2">
+      {/* Dark Mode Toggle */}
+      <button
+        id="theme-toggle"
+        class="p-2 text-ink-500 hover:bg-ink-100 dark:text-ink-400 dark:hover:bg-ink-800 rounded-xl transition-colors"
+        aria-label="Toggle Dark Mode"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="w-6 h-6 dark:hidden"
+          ><path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"
+          ></path></svg
+        >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="w-6 h-6 hidden dark:block"
+          ><path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"
+          ></path></svg
+        >
+      </button>
+
+      <div class="relative group pb-2 -mb-2">
+        <div
+          class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-ink-100 dark:bg-ink-800 rounded-lg text-sm font-medium text-ink-700 dark:text-ink-200 cursor-pointer hover:bg-ink-200 dark:hover:bg-ink-700 transition-colors"
+        >
+          <span class="w-2 h-2 rounded-full bg-peach-500"></span>
+          {currentProject ? currentProject.name : "Select Project"}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            class="w-4 h-4 text-ink-500"
+            ><path
+              fill-rule="evenodd"
+              d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+              clip-rule="evenodd"></path></svg
+          >
+        </div>
+
+        {/* Project Dropdown */}
+        <div
+          class="absolute left-0 top-full mt-1 w-56 bg-white dark:bg-ink-800 rounded-xl shadow-card border border-ink-100 dark:border-ink-700 py-1 hidden group-hover:block hover:block z-50 animate-in fade-in zoom-in-95 duration-200"
+        >
+          <div
+            class="px-3 py-2 text-xs text-ink-400 font-medium uppercase border-b border-ink-50 dark:border-ink-700"
+          >
+            Your Projects
+          </div>
+          {
+            projects.length > 0 ? (
+              projects.map((p) => (
+                <a
+                  href={`/projects/${p._id}`}
+                  class="block px-4 py-2 text-sm text-ink-700 dark:text-ink-200 hover:bg-peach-50 dark:hover:bg-ink-700 hover:text-peach-700 dark:hover:text-peach-300 transition-colors truncate"
+                >
+                  {p.name}
+                </a>
+              ))
+            ) : (
+              <div class="px-4 py-2 text-sm text-ink-400 italic">
+                No projects found
+              </div>
+            )
+          }
+          <div class="border-t border-ink-50 dark:border-ink-700 mt-1 pt-1">
+            <a
+              href="/projects?action=create"
+              class="block px-4 py-2 text-sm text-peach-600 font-medium hover:bg-peach-50 dark:hover:bg-ink-700 transition-colors"
+            >
+              + Create New Project
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4">
+      <div class="relative group pb-2 -mb-2">
+        <button
+          class="flex items-center gap-3 pl-2 pr-1 py-1 rounded-full hover:bg-ink-50 dark:hover:bg-ink-800 transition-colors"
+        >
+          <span
+            class="text-sm font-medium text-ink-700 dark:text-ink-200 hidden sm:block"
+            >{user?.email || "User"}</span
+          >
+          <div
+            class="w-9 h-9 rounded-full bg-gradient-to-tr from-peach-400 to-peach-200 border-2 border-white dark:border-ink-700 shadow-sm"
+          >
+          </div>
+        </button>
+
+        {/* Dropdown */}
+        <div
+          class="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-ink-800 rounded-xl shadow-card border border-ink-100 dark:border-ink-700 py-1 hidden group-hover:block hover:block transform origin-top-right transition-all z-50 animate-in fade-in zoom-in-95 duration-200"
+        >
+          <div class="px-4 py-3 border-b border-ink-50 dark:border-ink-700">
+            <p class="text-xs text-ink-400 font-medium uppercase">
+              Signed in as
+            </p>
+            <p
+              class="text-sm font-semibold text-ink-900 dark:text-white truncate"
+            >
+              {user?.email}
+            </p>
+          </div>
+          <form action="/api/auth/logout" method="POST">
+            <button
+              type="submit"
+              class="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+            >
+              Sign out
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
