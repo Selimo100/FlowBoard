@@ -8,6 +8,7 @@ import Card from "../../components/ui/Card.astro";
 import Button from "../../components/ui/Button.astro";
 import Badge from "../../components/ui/Badge.astro";
 import Modal from "../../components/ui/Modal.astro";
+import ConfirmModal from "../../components/ui/ConfirmModal.astro";
 import Input from "../../components/ui/Input.astro";
 import { ProjectService } from "../../lib/services/project.service";
 
@@ -186,91 +187,169 @@ const projects = await ProjectService.getAllProjects(showArchived);
   </Modal>
 
   <Modal id="edit_project_modal" title="Edit Project">
-    <form id="edit_project_form" class="space-y-6">
-      <input type="hidden" name="id" id="edit_project_id" />
-      <Input name="name" id="edit_project_name" label="Project Name" required />
-      <Input
-        name="repositoryUrl"
-        id="edit_project_repo"
-        label="Git Repository URL (Optional)"
-      />
-      <Input
-        name="description"
-        id="edit_project_desc"
-        label="Description (Optional)"
-      />
+    <div class="space-y-6">
+      <form id="edit_project_form" class="space-y-6">
+        <input type="hidden" name="id" id="edit_project_id" />
+        <div class="space-y-4">
+          <Input
+            name="name"
+            id="edit_project_name"
+            label="Project Name"
+            required
+          />
+          <Input
+            name="repositoryUrl"
+            id="edit_project_repo"
+            label="Git Repository URL (Optional)"
+            placeholder="https://github.com/..."
+          />
+          <Input
+            name="description"
+            id="edit_project_desc"
+            label="Description (Optional)"
+            placeholder="Brief description..."
+          />
+        </div>
 
-      <div class="flex justify-between pt-2">
-        <Button
-          variant="ghost"
-          id="archive_project_btn"
-          type="button"
-          class="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-          onclick="toggleArchive()">Archive Project</Button
-        >
-        <div class="flex gap-2">
+        <div class="flex justify-between items-center pt-2">
           <Button
             variant="ghost"
+            id="archive_project_btn"
             type="button"
-            class="dark:text-ink-400"
-            onclick="document.getElementById('edit_project_modal').close()"
-            >Cancel</Button
+            class="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 px-0"
+            onclick="showArchiveConfirmation()"
           >
-          <Button type="submit">Save Changes</Button>
+            Archive Project
+          </Button>
+          <div class="flex gap-2">
+            <Button
+              variant="ghost"
+              type="button"
+              class="dark:text-ink-400"
+              onclick="document.getElementById('edit_project_modal').close()"
+            >
+              Cancel
+            </Button>
+            <Button type="submit">Save Changes</Button>
+          </div>
         </div>
-      </div>
-    </form>
+      </form>
+    </div>
   </Modal>
+
+  <ConfirmModal
+    id="confirm_archive_modal"
+    title="Update Project Status"
+    confirmText="Yes, Proceed"
+  />
 </AppLayout>
 
 <script is:inline>
   function openEditModal(id, name, repoUrl, desc, isArchived) {
     const modal = document.getElementById("edit_project_modal");
+    if (!modal) return;
 
     // Populate form
-    document.getElementById("edit_project_id").value = id;
-    document.getElementById("edit_project_name").value = name;
-    document.getElementById("edit_project_repo").value = repoUrl || "";
-    document.getElementById("edit_project_desc").value = desc || "";
+    const idInput = document.getElementById("edit_project_id");
+    const nameInput = document.getElementById("edit_project_name");
+    const repoInput = document.getElementById("edit_project_repo");
+    const descInput = document.getElementById("edit_project_desc");
+
+    if (idInput) idInput.value = id;
+    if (nameInput) nameInput.value = name;
+    if (repoInput) repoInput.value = repoUrl || "";
+    if (descInput) descInput.value = desc || "";
 
     // Update archive button text
     const archiveBtn = document.getElementById("archive_project_btn");
-    archiveBtn.innerText = isArchived ? "Restore Project" : "Archive Project";
+    if (archiveBtn) {
+      archiveBtn.innerText = isArchived ? "Restore Project" : "Archive Project";
+      // Update styling based on state
+      if (isArchived) {
+        archiveBtn.classList.remove(
+          "text-red-500",
+          "hover:text-red-700",
+          "hover:bg-red-50",
+        );
+        archiveBtn.classList.add(
+          "text-green-600",
+          "hover:text-green-700",
+          "hover:bg-green-50",
+        );
+      } else {
+        archiveBtn.classList.add(
+          "text-red-500",
+          "hover:text-red-700",
+          "hover:bg-red-50",
+        );
+        archiveBtn.classList.remove(
+          "text-green-600",
+          "hover:text-green-700",
+          "hover:bg-green-50",
+        );
+      }
+    }
 
     // Store archive status
     modal.dataset.isArchived = String(isArchived);
-
     modal.showModal();
   }
 
-  async function toggleArchive() {
-    const id = document.getElementById("edit_project_id").value;
-    const isArchived =
-      document.getElementById("edit_project_modal").dataset.isArchived ===
-      "true";
+  function showArchiveConfirmation() {
+    const modal = document.getElementById("edit_project_modal");
+    const isArchived = modal.dataset.isArchived === "true";
+    const confirmModal = document.getElementById("confirm_archive_modal");
 
-    if (
-      !confirm(
-        isArchived
-          ? "Are you sure you want to restore this project?"
-          : "Are you sure you want to archive this project?",
-      )
-    )
-      return;
-
-    try {
-      const res = await fetch(`/api/projects/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isArchived: !isArchived }),
-      });
-      if (res.ok) window.location.reload();
-      else alert("Error updating project status");
-    } catch (err) {
-      console.error(err);
-      alert("Error updating project");
+    // Update message dynamically
+    const msgElement = confirmModal.querySelector("p");
+    if (msgElement) {
+      msgElement.textContent = isArchived
+        ? "Are you sure you want to restore this project? It will be visible in the active projects list again."
+        : "Are you sure you want to archive this project? It will be moved to the archived list and hidden from the dashboard.";
     }
+
+    // Update button text/style
+    const confirmBtn = document.getElementById(
+      "confirm_archive_modal_confirm_btn",
+    );
+    if (confirmBtn) {
+      confirmBtn.textContent = isArchived
+        ? "Restore Project"
+        : "Archive Project";
+      confirmBtn.className = isArchived
+        ? "bg-green-600 hover:bg-green-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+        : "bg-red-600 hover:bg-red-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors";
+    }
+
+    confirmModal.showModal();
   }
+
+  // Handle the actual confirmation action
+  document
+    .getElementById("confirm_archive_modal")
+    ?.addEventListener("confirm", async () => {
+      const id = document.getElementById("edit_project_id").value;
+      const isArchived =
+        document.getElementById("edit_project_modal").dataset.isArchived ===
+        "true";
+
+      try {
+        const res = await fetch(`/api/projects/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isArchived: !isArchived }),
+        });
+
+        if (res.ok) {
+          window.location.reload();
+        } else {
+          alert("Error updating project status");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Error updating project");
+      }
+    });
 </script>
 
 <script>
