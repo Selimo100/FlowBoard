@@ -28,23 +28,6 @@ export const POST: APIRoute = async (context) => {
     const body = await context.request.json();
     const { name, description, repositoryUrl } = body;
 
-    const project = await ProjectService.createProject(name, description, repositoryUrl);
-    
-    return new Response(JSON.stringify(project), {
-      status: 201,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: (error as Error).message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
-};
-
-    const body = await request.json();
-    const { name, description } = body;
-
     if (!name) {
       return new Response(JSON.stringify({ error: 'Name is required' }), {
         status: 400,
@@ -52,7 +35,8 @@ export const POST: APIRoute = async (context) => {
       });
     }
 
-    const project = await ProjectService.createProject(name, description);
+    const project = await ProjectService.createProject(name, description, repositoryUrl);
+    
     return new Response(JSON.stringify(project), {
       status: 201,
       headers: { 'Content-Type': 'application/json' }

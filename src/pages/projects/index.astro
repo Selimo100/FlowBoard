@@ -23,6 +23,7 @@ const projects = await ProjectService.getAllProjects();
     <div class="flex gap-3">
       <div class="relative">
         <input
+          id="project-search"
           type="text"
           placeholder="Search projects..."
           class="pl-10 pr-4 py-2.5 rounded-2xl border-none ring-1 ring-ink-100 dark:ring-ink-700 bg-white dark:bg-ink-800 dark:text-white focus:ring-2 focus:ring-peach-300 outline-none w-64 shadow-sm placeholder:text-ink-300 dark:placeholder:text-ink-500"
@@ -50,7 +51,7 @@ const projects = await ProjectService.getAllProjects();
 
   {
     projects.length === 0 ? (
-      <div class="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-ink-100">
+      <div class="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-ink-100 p-4">
         <div class="w-16 h-16 bg-peach-50 rounded-full flex items-center justify-center mx-auto mb-4">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -76,9 +77,16 @@ const projects = await ProjectService.getAllProjects();
         </Button>
       </div>
     ) : (
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        id="projects-grid"
+      >
         {projects.map((project: any) => (
-          <a href={`/projects/${project._id}`} class="block group">
+          <a
+            href={`/projects/${project._id}`}
+            class="block group project-card"
+            data-name={project.name.toLowerCase()}
+          >
             <Card class="h-full hover:shadow-lg transition-all border border-transparent hover:border-peach-200">
               <div class="flex justify-between items-start mb-4">
                 <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-peach-100 to-peach-50 flex items-center justify-center text-peach-600 font-bold text-lg shadow-inner">
@@ -102,16 +110,16 @@ const projects = await ProjectService.getAllProjects();
                 </div>
               </div>
 
-              <h3 class="text-lg font-semibold text-ink-900 mb-2 truncate group-hover:text-peach-600 transition-colors">
+              <h3 class="text-lg font-semibold text-ink-900 dark:text-white mb-2 truncate group-hover:text-peach-600 transition-colors">
                 {project.name}
               </h3>
-              <p class="text-ink-500 text-sm line-clamp-2 mb-4 h-10">
+              <p class="text-ink-500 dark:text-ink-400 text-sm line-clamp-2 mb-4 h-10">
                 {project.description || "No description provided"}
               </p>
 
-              <div class="flex items-center justify-between border-t border-ink-50 pt-4 mt-auto">
+              <div class="flex items-center justify-between border-t border-ink-50 dark:border-ink-700 pt-4 mt-auto">
                 <Badge label="Active" variant="success" />
-                <span class="text-xs text-ink-400 font-medium">
+                <span class="text-xs text-ink-400 dark:text-ink-500 font-medium">
                   Updated just now
                 </span>
               </div>
@@ -156,6 +164,22 @@ const projects = await ProjectService.getAllProjects();
 
 <script>
   const form = document.getElementById("create_project_form");
+  const searchInput = document.getElementById("project-search");
+
+  // Search functionality
+  searchInput?.addEventListener("input", (e) => {
+    const searchTerm = (e.target as HTMLInputElement).value.toLowerCase();
+    const cards = document.querySelectorAll(".project-card");
+
+    cards.forEach((card) => {
+      const name = card.getAttribute("data-name") || "";
+      if (name.includes(searchTerm)) {
+        (card as HTMLElement).style.display = "block";
+      } else {
+        (card as HTMLElement).style.display = "none";
+      }
+    });
+  });
 
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
