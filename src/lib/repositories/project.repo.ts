@@ -1,3 +1,6 @@
+// Explanation: This repository is responsible for direct database interactions for Projects.
+// It uses the MongoDB driver to find, insert, update, and delete project documents in the 'projects' collection.
+
 import { ObjectId } from 'mongodb';
 import { getDb } from '../db/mongo';
 

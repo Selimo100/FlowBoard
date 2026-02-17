@@ -1,3 +1,7 @@
+// Explanation: This file manages the connection to the MongoDB database.
+// It implements a singleton pattern using global variables to ensure we only create one connection pool,
+// even when the server hot-reloads during development (HMR), preventing "Topology Closed" errors.
+
 import { MongoClient, type Db } from 'mongodb';
 import { MONGODB_URI, MONGODB_DB } from '../config/env';
 

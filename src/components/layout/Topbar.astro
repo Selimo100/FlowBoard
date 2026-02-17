@@ -1,4 +1,8 @@
 ---
+// Explanation: This component renders the top navigation bar of the application.
+// It includes functionality for switching projects and handles basic user state display.
+// It fetches the list of available projects to populate the dropdown menu.
+
 import { ProjectService } from "../../lib/services/project.service";
 
 const { user } = Astro.locals as { user?: { email: string } };

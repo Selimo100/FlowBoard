@@ -1,3 +1,7 @@
+// Explanation: This file defines the API endpoints for project management.
+// It handles GET requests to retreieve all projects and POST requests to create a new project.
+// This runs on the server and communicates directly with the ProjectService.
+
 import type { APIRoute } from 'astro';
 import { ProjectService } from '../../../lib/services/project.service';
 import { requireAuthApi } from '../../../lib/auth/guards';

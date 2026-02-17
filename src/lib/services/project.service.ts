@@ -1,3 +1,7 @@
+// Explanation: This service layer handles the business logic for projects.
+// It acts as an intermediary between the API/Page and the Repository.
+// It validates input (like ensuring a name exists) before asking the repository to save data.
+
 import { ProjectRepo, type Project } from '../repositories/project.repo';
 
 export const ProjectService = {
