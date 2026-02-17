@@ -12,4 +12,4 @@ mirror_to_github:
   script:
     - git remote remove github 2>/dev/null || true
     - git remote add github https://Selimo100:${GITHUB_TOKEN}@github.com/Selimo100/FlowBoard.git
-    - git push github HEAD:main
+    - git push github HEAD:refs/heads/main
