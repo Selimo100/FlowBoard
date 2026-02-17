@@ -8,7 +8,7 @@ export default defineConfig({
   adapter: node({
     mode: 'standalone',
   }),
-  outDir: './build',
+  outDir: './dist',
   vite: {
     plugins: [tailwindcss()],
     ssr: {

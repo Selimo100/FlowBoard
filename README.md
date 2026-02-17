@@ -44,3 +44,26 @@ All commands are run from the root of the project, from a terminal:
 ## 👀 Want to learn more?
 
 Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+
+## Docker + Render
+
+Local build/run:
+
+```sh
+# Build the image
+docker build -t flowboard:local .
+
+# Run the container (cleanly named "flowboard-app")
+docker run --rm -p 10000:10000 \
+  --name flowboard-app \
+  -e HOST=0.0.0.0 \
+  -e PORT=10000 \
+  -e MONGODB_URI="mongodb://host.docker.internal:27017" \
+  -e MONGODB_DB="flowboard" \
+  flowboard:local
+```
+
+Render configuration:
+
+- Service type: Web Service (Docker)
+- Env Vars: `MONGODB_URI` (required), optionally `HOST` (default 0.0.0.0), `PORT` (default 10000)

@@ -19,9 +19,11 @@ export const MONGODB_URI = uri;
 export const MONGODB_DB = dbName;
 
 if (!MONGODB_URI) {
+  console.error("MONGODB_URI is not defined in environment variables");
   throw new Error("MONGODB_URI is not defined in environment variables");
 }
 
 if (!MONGODB_DB) {
+  console.error("MONGODB_DB is not defined in environment variables");
   throw new Error("MONGODB_DB is not defined in environment variables");
 }
