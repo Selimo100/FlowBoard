@@ -4,11 +4,19 @@
 import { ObjectId } from 'mongodb';
 import { getDb } from '../db/mongo';
 
+export interface ProjectList {
+  id: string;
+  title: string;
+  order: number;
+  color?: string;
+}
+
 export interface Project {
   _id?: ObjectId;
   name: string;
   description?: string;
   repositoryUrl?: string;
+  lists: ProjectList[];
   isArchived?: boolean;
   createdAt: Date;
   updatedAt: Date;
