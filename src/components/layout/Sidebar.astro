@@ -7,6 +7,22 @@ const links = [
 ];
 
 const currentPath = new URL(Astro.request.url).pathname;
+
+// Helper to determine if a link is active
+const isActive = (href) => {
+  if (href === "/projects") {
+    // Projects active if path is exactly /projects or /projects/ (but not /projects/foo)
+    return currentPath === "/projects" || currentPath === "/projects/";
+  }
+  if (href === "/board") {
+    // Board active if path is /board OR /projects/foo (a specific project)
+    return (
+      currentPath === "/board" ||
+      (currentPath.startsWith("/projects/") && currentPath !== "/projects/")
+    );
+  }
+  return currentPath.startsWith(href);
+};
 ---
 
 <aside
@@ -29,7 +45,7 @@ const currentPath = new URL(Astro.request.url).pathname;
           href={link.href}
           class:list={[
             "flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200 group",
-            currentPath.startsWith(link.href)
+            isActive(link.href)
               ? "bg-white/20 font-semibold shadow-inner text-white"
               : "text-white/80 hover:bg-white/10 hover:text-white",
           ]}

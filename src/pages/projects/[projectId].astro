@@ -1,16 +1,33 @@
 ---
 import AppLayout from "../../layouts/AppLayout.astro";
 import { ProjectService } from "../../lib/services/project.service";
+import { IssueService } from "../../lib/services/issue.service";
 import Button from "../../components/ui/Button.astro";
 import Input from "../../components/ui/Input.astro";
 import Modal from "../../components/ui/Modal.astro";
 
 const { projectId } = Astro.params;
 let project;
+let issues = [];
+let issuesByList = {};
 
 if (projectId) {
   try {
     project = await ProjectService.getProjectById(projectId);
+    issues = await IssueService.getIssuesByProject(projectId);
+    
+    issues.forEach(issue => {
+      if (!issuesByList[issue.listId]) {
+        issuesByList[issue.listId] = [];
+      }
+      issuesByList[issue.listId].push(issue);
+    });
+    
+    // Sort issues by order
+    Object.keys(issuesByList).forEach(listId => {
+      issuesByList[listId].sort((a, b) => a.order - b.order);
+    });
+
   } catch (error) {
     console.error("Failed to fetch project:", error);
   }
@@ -47,7 +64,30 @@ const colorOptions = [
         </p>
       </div>
 
-      <div class="flex gap-2">
+      <div class="flex gap-2 items-center">
+        <div class="relative w-48">
+             <input 
+                type="text" 
+                id="issue-search" 
+                placeholder="Search issues..." 
+                class="w-full h-10 px-3 pr-8 rounded-xl bg-surface-50 dark:bg-ink-900 border border-ink-200 dark:border-ink-700 text-sm focus:outline-none focus:ring-2 focus:ring-peach-500/50"
+                oninput="filterIssues()"
+             />
+             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute right-3 top-3 text-ink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+             </svg>
+        </div>
+        <select 
+            id="issue-priority-filter" 
+            class="h-10 px-3 rounded-xl bg-surface-50 dark:bg-ink-900 border border-ink-200 dark:border-ink-700 text-sm focus:outline-none focus:ring-2 focus:ring-peach-500/50"
+            onchange="filterIssues()"
+        >
+            <option value="">All Priorities</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+        </select>
+        <div class="h-6 w-px bg-ink-200 dark:bg-ink-700 mx-1"></div>
         <Button
           variant="secondary"
           onclick="document.getElementById('create_list_modal').showModal()"
@@ -210,19 +250,60 @@ const colorOptions = [
                       </div>
 
                       <!-- Body (scroll area) -->
-                      <div class="p-3 flex-1 min-h-0 overflow-y-auto">
-                        <div
-                          class="rounded-2xl border border-dashed border-ink-200/70 dark:border-ink-700/60
-                                 bg-surface-100/70 dark:bg-ink-800/40
-                                 px-4 py-7 text-center"
-                        >
-                          <p class="text-xs font-medium text-ink-500 dark:text-ink-300">
-                            Drop tasks here
-                          </p>
-                          <p class="text-[0.7rem] text-ink-400 dark:text-ink-500 mt-1">
-                            Drag items into this list
-                          </p>
-                        </div>
+                      <div class="p-3 flex-1 min-h-0 overflow-y-auto list-body" data-list-id={list.id}>
+                        {
+                          issuesByList[list.id] && issuesByList[list.id].length > 0 ? (
+                            issuesByList[list.id].map((issue) => (
+                              <div
+                                class="issue-card bg-surface-50 dark:bg-ink-800 p-3 rounded-xl mb-2
+                                       border border-ink-200/50 dark:border-ink-700/50
+                                       shadow-sm hover:shadow transition-shadow
+                                       cursor-pointer group relative"
+                                data-issue-id={issue._id}
+                                draggable="true"
+                                onclick={`openEditIssueModal('${issue._id}')`}
+                              >
+                                <div class="flex justify-between items-start mb-1">
+                                    <span class="text-sm font-medium text-ink-900 dark:text-ink-100 line-clamp-2 leading-snug">
+                                        {issue.title}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between items-center mt-2">
+                                     <div class="flex gap-1">
+                                         {issue.labels && issue.labels.map(label => (
+                                             <span class="text-[10px] px-1.5 py-0.5 rounded bg-surface-200 dark:bg-ink-700 text-ink-600 dark:text-ink-300">
+                                                 {label}
+                                             </span>
+                                         ))}
+                                     </div>
+                                     <span class={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                                        issue.priority === 'High' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+                                        issue.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300' :
+                                        'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                                     }`}>
+                                        {issue.priority}
+                                     </span>
+                                </div>
+                              </div>
+                            ))
+                          ) : null
+                        }
+                      </div>
+
+                      <!-- Footer -->
+                      <div class="p-3 pt-0">
+                         <button
+                            class="w-full py-2 rounded-xl
+                                   text-sm font-medium text-ink-500 hover:text-ink-900
+                                   hover:bg-ink-100 dark:text-ink-400 dark:hover:text-ink-100
+                                   dark:hover:bg-ink-800/60 transition-colors flex items-center justify-start px-2 gap-2"
+                            onclick={`openCreateIssueModal('${list.id}')`}
+                         >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Add issue
+                         </button>
                       </div>
 
                     </div>
@@ -264,6 +345,58 @@ const colorOptions = [
       </div>
     </div>
   </div>
+
+  <!-- Create Issue Modal -->
+  <Modal id="create_issue_modal" title="Create New Issue">
+    <form id="create_issue_form" class="space-y-4">
+      <input type="hidden" name="listId" id="create_issue_list_id" />
+      <Input name="title" label="Title" placeholder="What needs to be done?" required />
+      
+      <div>
+        <label class="block text-sm font-medium text-ink-600 dark:text-ink-300 mb-1">Priority</label>
+        <select name="priority" class="w-full rounded-xl bg-surface-50 dark:bg-ink-900 border border-ink-200 dark:border-ink-700 px-3 py-2 text-sm text-ink-900 dark:text-ink-100 focus:outline-none focus:ring-2 focus:ring-peach-500/50">
+            <option value="Low">Low</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="High">High</option>
+        </select>
+      </div>
+      
+      <div class="flex justify-end gap-2 pt-4">
+        <Button variant="secondary" onclick="document.getElementById('create_issue_modal').close()">Cancel</Button>
+        <Button type="submit">Create Issue</Button>
+      </div>
+    </form>
+  </Modal>
+
+  <!-- Edit Issue Modal -->
+  <Modal id="edit_issue_modal" title="Edit Issue">
+    <form id="edit_issue_form" class="space-y-4">
+        <input type="hidden" name="issueId" id="edit_issue_id" />
+        <Input name="title" label="Title" id="edit_issue_title" required />
+        
+        <div>
+            <label class="block text-sm font-medium text-ink-600 dark:text-ink-300 mb-1">Description</label>
+            <textarea name="description" id="edit_issue_description" rows="3" class="w-full rounded-xl bg-surface-50 dark:bg-ink-900 border border-ink-200 dark:border-ink-700 px-3 py-2 text-sm text-ink-900 dark:text-ink-100 focus:outline-none focus:ring-2 focus:ring-peach-500/50"></textarea>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-ink-600 dark:text-ink-300 mb-1">Priority</label>
+            <select name="priority" id="edit_issue_priority" class="w-full rounded-xl bg-surface-50 dark:bg-ink-900 border border-ink-200 dark:border-ink-700 px-3 py-2 text-sm text-ink-900 dark:text-ink-100 focus:outline-none focus:ring-2 focus:ring-peach-500/50">
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+            </select>
+        </div>
+        
+        <div class="flex justify-between pt-4 border-t border-ink-100 dark:border-ink-700 mt-4">
+            <button type="button" class="text-red-600 hover:text-red-700 text-sm font-medium" onclick="deleteIssue()">Delete Issue</button>
+            <div class="flex gap-2">
+                <Button variant="secondary" onclick="document.getElementById('edit_issue_modal').close()">Cancel</Button>
+                <Button type="submit">Save Changes</Button>
+            </div>
+        </div>
+    </form>
+  </Modal>
 
   <!-- Create List Modal -->
   <Modal id="create_list_modal" title="Create New List">
@@ -368,7 +501,10 @@ const colorOptions = [
   </Modal>
 </AppLayout>
 
-<script define:vars={{ projectId: project._id }}>
+<script define:vars={{ projectId: projectId, issues }}>
+  window.projectId = projectId;
+  window.issues = issues;
+
   // List Creation
   const createForm = document.getElementById("create_list_form");
   createForm?.addEventListener("submit", async (e) => {
@@ -569,4 +705,181 @@ const colorOptions = [
       { offset: Number.NEGATIVE_INFINITY, element: null },
     ).element;
   }
+</script>
+
+<script>
+  // Create Issue
+  window.openCreateIssueModal = (listId) => {
+    document.getElementById('create_issue_list_id').value = listId;
+    document.getElementById('create_issue_modal').showModal();
+  };
+
+  const createIssueForm = document.getElementById('create_issue_form');
+  createIssueForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    
+    try {
+        const res = await fetch(`/api/projects/${window.projectId}/issues`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (res.ok) window.location.reload();
+        else alert('Failed to create issue');
+    } catch (err) {
+        console.error(err);
+        alert('Error creating issue');
+    }
+  });
+
+  // Edit Issue
+  window.openEditIssueModal = (issueId) => {
+      const issue = window.issues.find(i => i._id === issueId);
+      if (!issue) return;
+      
+      const modal = document.getElementById('edit_issue_modal');
+      // Populate form
+      document.getElementById('edit_issue_id').value = issue._id;
+      document.getElementById('edit_issue_title').value = issue.title;
+      document.getElementById('edit_issue_description').value = issue.description || '';
+      document.getElementById('edit_issue_priority').value = issue.priority;
+
+      modal.showModal();
+  };
+
+  const editIssueForm = document.getElementById('edit_issue_form');
+  editIssueForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      const issueId = data.issueId;
+      
+      try {
+          const res = await fetch(`/api/projects/${window.projectId}/issues/${issueId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data)
+          });
+          if (res.ok) window.location.reload();
+          else alert('Failed to update issue');
+      } catch (err) {
+          console.error(err);
+          alert('Error updating issue');
+      }
+  });
+
+  window.deleteIssue = async () => {
+      const issueId = document.getElementById('edit_issue_id').value;
+      if (!confirm('Are you sure?')) return;
+      
+      try {
+          const res = await fetch(`/api/projects/${window.projectId}/issues/${issueId}`, {
+              method: 'DELETE'
+          });
+          if (res.ok) window.location.reload();
+          else alert('Failed to delete issue');
+      } catch (err) {
+          console.error(err);
+          alert('Error deleting issue');
+      }
+  };
+
+  // Issue Drag and Drop
+  const issueContainers = document.querySelectorAll('.list-body');
+  let draggedIssue = null;
+
+  issueContainers.forEach(container => {
+      container.addEventListener('dragstart', (e) => {
+          if (!e.target.classList.contains('issue-card')) return;
+          e.stopPropagation(); // Prevent list drag
+          draggedIssue = e.target;
+          draggedIssue.classList.add('opacity-50');
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', draggedIssue.dataset.issueId); // Firefox requires data
+      });
+
+      container.addEventListener('dragend', async (e) => {
+          if (!draggedIssue) return;
+          e.stopPropagation();
+          draggedIssue.classList.remove('opacity-50');
+          
+          const issueId = draggedIssue.dataset.issueId;
+          const closestListBody = draggedIssue.closest('.list-body');
+          if (!closestListBody) return;
+
+          const newListId = closestListBody.dataset.listId;
+          
+          const siblings = [...closestListBody.children].filter(c => c.classList.contains('issue-card'));
+          const newIndex = siblings.indexOf(draggedIssue);
+          
+          try {
+             await fetch(`/api/projects/${window.projectId}/issues/${issueId}`, {
+                 method: 'PUT',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({
+                     listId: newListId,
+                     order: newIndex
+                 })
+             });
+          } catch (err) {
+             console.error('Failed to move issue', err);
+             alert('Failed to move issue');
+          }
+          
+          draggedIssue = null;
+      });
+
+      container.addEventListener('dragover', (e) => {
+          if (!draggedIssue) return;
+          e.preventDefault();
+          e.stopPropagation();
+
+          const afterElement = getDragAfterIssue(container, e.clientY);
+          if (afterElement == null) {
+              container.appendChild(draggedIssue);
+          } else {
+              container.insertBefore(draggedIssue, afterElement);
+          }
+      });
+  });
+
+  function getDragAfterIssue(container, y) {
+      const draggableElements = [...container.querySelectorAll('.issue-card:not(.opacity-50)')];
+
+      return draggableElements.reduce((closest, child) => {
+          const box = child.getBoundingClientRect();
+          const offset = y - box.top - box.height / 2;
+          if (offset < 0 && offset > closest.offset) {
+              return { offset: offset, element: child };
+          }
+          return closest;
+      }, { offset: Number.NEGATIVE_INFINITY }).element;
+  }
+</script>
+
+<script>
+  window.filterIssues = () => {
+     const search = document.getElementById('issue-search').value.toLowerCase();
+     const priority = document.getElementById('issue-priority-filter').value;
+     
+     const cards = document.querySelectorAll('.issue-card');
+     
+     cards.forEach(card => {
+         const issueId = card.dataset.issueId;
+         const issue = window.issues.find(i => i._id === issueId);
+         
+         if (!issue) return;
+         
+         const matchesSearch = issue.title.toLowerCase().includes(search) || (issue.description && issue.description.toLowerCase().includes(search));
+         const matchesPriority = !priority || issue.priority === priority;
+         
+         if (matchesSearch && matchesPriority) {
+             card.classList.remove('hidden');
+         } else {
+             card.classList.add('hidden');
+         }
+     });
+  };
 </script>
