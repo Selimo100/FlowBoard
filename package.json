@@ -7,13 +7,16 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "db:indexes": "tsx src/lib/db/indexes.ts"
+    "db:indexes": "tsx src/lib/db/indexes.ts",
+    "auth:create-admin": "tsx scripts/create-admin.ts"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.2",
     "@astrojs/node": "^9.5.3",
     "@tailwindcss/vite": "^4.1.18",
+    "@types/bcryptjs": "^2.4.6",
     "astro": "^5.17.1",
+    "bcryptjs": "^3.0.3",
     "dotenv": "^17.2.4",
     "mongodb": "^7.1.0",
     "tailwindcss": "^4.1.18",

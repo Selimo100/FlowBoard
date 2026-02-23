@@ -1,9 +1,9 @@
 ---
-import { getSession } from "../lib/auth/session";
+import { getSessionFromRequest } from "../lib/auth/session";
 
-const session = getSession(Astro.cookies);
+const result = await getSessionFromRequest(Astro.cookies);
 
-if (session) {
+if (result) {
   return Astro.redirect("/projects");
 }
 return Astro.redirect("/login");

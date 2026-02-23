@@ -24,12 +24,14 @@ if (result) {
       <h1
         class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-peach-600 to-peach-800"
       >
-        Welcome Back
+        Get Started
       </h1>
-      <p class="text-ink-400 mt-2">Sign in to your FlowBoard account</p>
+      <p class="text-ink-400 mt-2">Create your FlowBoard account</p>
     </div>
 
-    <form id="login-form" class="space-y-6">
+    <form id="register-form" class="space-y-6">
+      <Input name="name" type="text" placeholder="Jane Doe" label="Full Name" />
+
       <Input
         name="email"
         type="email"
@@ -37,6 +39,7 @@ if (result) {
         label="Email Address"
         required
       />
+
       <Input
         name="password"
         type="password"
@@ -57,21 +60,21 @@ if (result) {
         size="lg"
         class="w-full shadow-lg shadow-peach-500/30"
       >
-        Sign In
+        Create Account
       </Button>
     </form>
 
     <div class="mt-8 text-center text-sm text-ink-400">
-      Don't have an account? <a
-        href="/register"
-        class="text-peach-600 font-medium hover:underline">Create Account</a
+      Already have an account? <a
+        href="/login"
+        class="text-peach-600 font-medium hover:underline">Sign In</a
       >
     </div>
   </Card>
 </AuthLayout>
 
 <script>
-  const form = document.getElementById("login-form") as HTMLFormElement;
+  const form = document.getElementById("register-form") as HTMLFormElement;
   const errorDiv = document.getElementById("error-message");
 
   if (form) {
@@ -80,21 +83,22 @@ if (result) {
       if (errorDiv) errorDiv.classList.add("hidden");
 
       const formData = new FormData(form);
+      const name = formData.get("name");
       const email = formData.get("email");
       const password = formData.get("password");
 
       try {
-        const res = await fetch("/api/auth/login", {
+        const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ email, password, name }),
         });
 
         const data = await res.json();
 
         if (!res.ok) {
           if (errorDiv) {
-            errorDiv.textContent = data.error || "Login failed";
+            errorDiv.textContent = data.error || "Registration failed";
             errorDiv.classList.remove("hidden");
           }
         } else {

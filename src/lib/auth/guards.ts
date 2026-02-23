@@ -1,18 +1,34 @@
 import type { APIContext } from 'astro';
-import { getSession } from './session';
+import { getSessionFromRequest } from './session';
+import type { User } from '../repositories/user.repo';
 
-export function requireAuth(context: APIContext) {
-  const session = getSession(context.cookies);
-  if (!session) {
+export async function requireUser(context: APIContext): Promise<User | Response> {
+  const result = await getSessionFromRequest(context.cookies);
+  if (!result) {
     return context.redirect('/login');
   }
-  return session;
+
+  // Add user to locals for convenience if needed later
+  context.locals.user = result.user;
+  return result.user;
 }
 
-export function requireAuthApi(context: APIContext) {
-  const session = getSession(context.cookies);
-  if (!session) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+export async function requireApiUser(context: APIContext): Promise<User | Response> {
+  const result = await getSessionFromRequest(context.cookies);
+  if (!result) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
-  return session;
+
+  context.locals.user = result.user;
+  return result.user;
 }
+
+export async function getCurrentUser(context: APIContext): Promise<User | null> {
+  const result = await getSessionFromRequest(context.cookies);
+  if (!result) return null;
+  return result.user;
+}
+

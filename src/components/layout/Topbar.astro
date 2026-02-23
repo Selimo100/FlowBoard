@@ -5,11 +5,16 @@
 
 import { ProjectService } from "../../lib/services/project.service";
 
-const { user } = Astro.locals as { user?: { email: string } };
+interface Props {
+  user?: { email: string; name?: string };
+}
 
-// Fetch projects for switcher
+const { user } = Astro.props;
+
 let projects: any[] = [];
 try {
+  // If ProjectService needs user content, we might need to pass it or it uses global context?
+  // Assuming ProjectService is stateless or connects to DB directly.
   projects = await ProjectService.getAllProjects();
 } catch (e) {
   // In case DB fails, empty array
@@ -136,24 +141,41 @@ const currentProject =
       </div>
     </div>
 
-    <div class="flex items-center gap-4">
-      <div class="relative group pb-2 -mb-2">
+    <!-- Right -->
+    <div class="flex items-center gap-3">
+      <div class="relative group">
         <button
-          class="flex items-center gap-3 pl-2 pr-1 py-1 rounded-full hover:bg-ink-50 dark:hover:bg-ink-800 transition-colors"
+          id="user-menu-button"
+          type="button"
+          class="flex items-center gap-3 pl-2 pr-2 py-1.5 rounded-full
+                 hover:bg-ink-100 dark:hover:bg-ink-800/70 transition-colors
+                 focus:outline-none focus-visible:ring-2 focus-visible:ring-peach-300/70"
+          onclick="document.getElementById('user-menu')?.classList.toggle('hidden');"
         >
           <span
-            class="text-sm font-medium text-ink-700 dark:text-ink-200 hidden sm:block"
-            >{user?.email || "User"}</span
+            class="hidden sm:block text-sm font-medium text-ink-800 dark:text-ink-100 max-w-[10rem] truncate"
           >
+            {user?.name || user?.email || "User"}
+          </span>
+
           <div
-            class="w-9 h-9 rounded-full bg-gradient-to-tr from-peach-400 to-peach-200 border-2 border-white dark:border-ink-700 shadow-sm"
+            class="w-9 h-9 rounded-full bg-peach-500 text-white flex items-center justify-center font-bold shadow-sm"
           >
+            {
+              user?.name?.[0]?.toUpperCase() ||
+                user?.email?.[0]?.toUpperCase() ||
+                "U"
+            }
           </div>
         </button>
 
-        {/* Dropdown */}
         <div
-          class="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-ink-800 rounded-xl shadow-card border border-ink-100 dark:border-ink-700 py-1 hidden group-hover:block hover:block transform origin-top-right transition-all z-50 animate-in fade-in zoom-in-95 duration-200"
+          id="user-menu"
+          class="absolute right-0 top-full mt-2 w-56 hidden z-50
+                 rounded-2xl shadow-card
+                 bg-surface-50 dark:bg-ink-800
+                 border border-ink-100 dark:border-ink-700
+                 overflow-hidden py-1"
         >
           <div class="px-4 py-3 border-b border-ink-50 dark:border-ink-700">
             <p class="text-xs text-ink-400 font-medium uppercase">
@@ -165,16 +187,76 @@ const currentProject =
               {user?.email}
             </p>
           </div>
-          <form action="/api/auth/logout" method="POST">
+
+          <div class="p-1">
             <button
-              type="submit"
-              class="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+              id="logout-btn"
+              class="w-full text-left px-3 py-2 rounded-xl text-sm
+                     text-red-600 dark:text-red-400
+                     hover:bg-red-50 dark:hover:bg-ink-700/70
+                     transition-colors"
             >
               Sign out
             </button>
-          </form>
+          </div>
         </div>
       </div>
     </div>
   </div>
+
+  <script>
+    const logoutBtn = document.getElementById("logout-btn");
+    logoutBtn?.addEventListener("click", async () => {
+      try {
+        const res = await fetch("/api/auth/logout", { method: "POST" });
+        if (res.ok) {
+          window.location.href = "/login";
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    });
+
+    // Mobile menu toggle logic if needed, but keeping separate from this block
+  </script>
+
+  <!-- Minimal JS: close menus on outside click / ESC -->
+  <script is:inline>
+    const closeMenus = () => {
+      const pm = document.getElementById("project-menu");
+      const pb = document.getElementById("project-switcher");
+      const um = document.getElementById("user-menu");
+      const ub = document.getElementById("user-menu-button");
+      if (pm && !pm.classList.contains("hidden")) pm.classList.add("hidden");
+      if (um && !um.classList.contains("hidden")) um.classList.add("hidden");
+      pb?.setAttribute("aria-expanded", "false");
+      ub?.setAttribute("aria-expanded", "false");
+    };
+
+    document.addEventListener("click", (e) => {
+      const t = e.target;
+      const withinProject =
+        document.getElementById("project-switcher")?.contains(t) ||
+        document.getElementById("project-menu")?.contains(t);
+      const withinUser =
+        document.getElementById("user-menu-button")?.contains(t) ||
+        document.getElementById("user-menu")?.contains(t);
+
+      if (!withinProject && !withinUser) closeMenus();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeMenus();
+    });
+
+    // Optional: add shadow on scroll (subtle)
+    const topbar = document.getElementById("topbar");
+    const onScroll = () => {
+      if (!topbar) return;
+      if (window.scrollY > 2) topbar.classList.add("shadow-sm");
+      else topbar.classList.remove("shadow-sm");
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+  </script>
 </header>
