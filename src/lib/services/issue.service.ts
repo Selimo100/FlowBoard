@@ -25,7 +25,7 @@ export const IssueService = {
     return await IssueRepo.findAllByProject(projectId, query);
   },
 
-  async createIssue(projectId: string, listId: string, title: string, priority: Priority = 'Medium') {
+  async createIssue(projectId: string, listId: string, title: string, priority: Priority = 'Medium', details?: { description?: string, labels?: string[], assignee?: string }) {
     if (!title) throw new Error('Title is required');
     
     // Verify project and list exist
@@ -46,9 +46,9 @@ export const IssueService = {
       title,
       priority,
       order,
-      description: '',
-      labels: [],
-      assignee: null,
+      description: details?.description || '',
+      labels: details?.labels || [],
+      assignee: details?.assignee || null,
     });
   },
 

@@ -1,0 +1,194 @@
+---
+import AppLayout from "../../../../layouts/AppLayout.astro";
+import { ProjectService } from "../../../../lib/services/project.service";
+import { IssueService } from "../../../../lib/services/issue.service";
+import Button from "../../../../components/ui/Button.astro";
+import Input from "../../../../components/ui/Input.astro";
+
+const { projectId } = Astro.params;
+let project;
+let issues = [];
+let openCount = 0;
+let closedCount = 0;
+
+if (projectId) {
+  try {
+    project = await ProjectService.getProjectById(projectId);
+    issues = await IssueService.getIssuesByProject(projectId);
+    
+    // Determine status based on list name
+    // Assuming "Completed" list means Closed, everything else Open
+    const closedListIds = project.lists
+      .filter(l => l.title === 'Completed' || l.title === 'Done')
+      .map(l => l.id);
+      
+    issues = issues.map(issue => ({
+      ...issue,
+      status: closedListIds.includes(issue.listId) ? 'closed' : 'open',
+      listName: project.lists.find(l => l.id === issue.listId)?.title || 'Unknown'
+    }));
+    
+    openCount = issues.filter(i => i.status === 'open').length;
+    closedCount = issues.filter(i => i.status === 'closed').length;
+
+    // Default sort by createdAt desc
+    issues.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  } catch (error) {
+    console.error("Failed to fetch data:", error);
+    return Astro.redirect("/404");
+  }
+}
+
+if (!project) {
+  return Astro.redirect("/404");
+}
+
+const currentFilter = Astro.url.searchParams.get('status') || 'open';
+const filteredIssues = currentFilter === 'all' 
+  ? issues 
+  : issues.filter(i => i.status === currentFilter);
+---
+
+<AppLayout title={`Issues - ${project.name}`}>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- Project Navigation Header -->
+    <div class="mb-8 border-b border-ink-200 dark:border-ink-700 pb-1">
+        <div class="flex items-center justify-between mb-4">
+             <h1 class="text-3xl font-bold text-ink-900 dark:text-ink-50">{project.name} <span class="text-ink-400 font-normal text-lg">/ Issues</span></h1>
+            <div class="flex items-center gap-2 mt-1">
+                 <a href={`/projects/${projectId}`} class="px-3 py-1 text-ink-500 dark:text-ink-400 hover:bg-surface-100 dark:hover:bg-ink-800 rounded-lg text-sm transition-colors">
+                    Board
+                 </a>
+                 <div class="px-3 py-1 bg-peach-500 text-white rounded-lg text-sm font-medium">
+                    List
+                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+       <!-- Filter Tabs -->
+       <div class="flex gap-4 text-sm font-medium">
+           <a href="?status=open" class={`flex items-center gap-2 ${currentFilter === 'open' ? 'text-ink-900 dark:text-ink-50 underline decoration-2 decoration-peach-500 underline-offset-8' : 'text-ink-500 hover:text-ink-700 dark:text-ink-400'}`}>
+               Open <span class="bg-ink-100 dark:bg-ink-800 px-2 py-0.5 rounded-full text-xs">{openCount}</span>
+           </a>
+           <a href="?status=closed" class={`flex items-center gap-2 ${currentFilter === 'closed' ? 'text-ink-900 dark:text-ink-50 underline decoration-2 decoration-peach-500 underline-offset-8' : 'text-ink-500 hover:text-ink-700 dark:text-ink-400'}`}>
+               Closed <span class="bg-ink-100 dark:bg-ink-800 px-2 py-0.5 rounded-full text-xs">{closedCount}</span>
+           </a>
+           <a href="?status=all" class={`flex items-center gap-2 ${currentFilter === 'all' ? 'text-ink-900 dark:text-ink-50 underline decoration-2 decoration-peach-500 underline-offset-8' : 'text-ink-500 hover:text-ink-700 dark:text-ink-400'}`}>
+               All <span class="bg-ink-100 dark:bg-ink-800 px-2 py-0.5 rounded-full text-xs">{issues.length}</span>
+           </a>
+       </div>
+       
+       <!-- Actions -->
+       <div class="flex gap-3 w-full sm:w-auto">
+           <div class="relative flex-1 sm:w-64">
+               <input type="text" placeholder="Search or filter results..." class="w-full pl-9 pr-4 py-2 rounded-xl bg-surface-50 dark:bg-ink-900 border border-ink-200 dark:border-ink-700 text-sm focus:outline-none focus:ring-2 focus:ring-peach-500/50" />
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-3 top-3 text-ink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+               </svg>
+           </div>
+           <a href={`/projects/${projectId}/issues/new`} class="px-4 py-2 bg-peach-500 hover:bg-peach-600 text-white rounded-xl text-sm font-medium transition-colors shadow-sm shadow-peach-500/30 flex items-center justify-center whitespace-nowrap">
+               New issue
+           </a>
+       </div>
+    </div>
+
+    <!-- Issues List -->
+    <div class="bg-surface-50 dark:bg-ink-900 border border-ink-200 dark:border-ink-700 rounded-2xl overflow-hidden shadow-sm">
+        {filteredIssues.length > 0 ? (
+            <ul class="divide-y divide-ink-100 dark:divide-ink-800">
+                {filteredIssues.map((issue) => (
+                    <li class="p-4 hover:bg-surface-100 dark:hover:bg-ink-800/50 transition-colors flex items-start gap-4 group">
+                        <div class="pt-1">
+                           {issue.status === 'open' ? (
+                               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                                   <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                               </svg>
+                           ) : (
+                               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-ink-400" viewBox="0 0 20 20" fill="currentColor">
+                                   <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" style="transform: rotate(45deg); transform-origin: center;" />
+                               </svg>
+                           )}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <a href={`#`} class="text-base font-semibold text-ink-900 dark:text-ink-100 hover:text-peach-600 dark:hover:text-peach-400 truncate block">
+                                    {issue.title}
+                                </a>
+                                {issue.labels && issue.labels.map(label => (
+                                    <span class="px-2 py-0.5 rounded-md bg-surface-200 dark:bg-ink-700 text-xs font-medium text-ink-600 dark:text-ink-300">
+                                        {label}
+                                    </span>
+                                ))}
+                            </div>
+                            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-500 dark:text-ink-400">
+                                <span>#{issue._id.toString().slice(-4)}</span>
+                                <span>&middot;</span>
+                                <span>created {new Date(issue.createdAt).toLocaleDateString()}</span>
+                                <span>&middot;</span>
+                                <span class="bg-surface-200/50 dark:bg-ink-800 px-1.5 py-0.5 rounded text-ink-600 dark:text-ink-300">
+                                    {issue.listName}
+                                </span>
+                                {issue.priority && (
+                                    <span class={`ml-auto sm:ml-0 px-1.5 py-0.5 rounded font-medium ${
+                                        issue.priority === 'High' ? 'text-red-600 bg-red-50 dark:bg-red-900/20' : 
+                                        issue.priority === 'Medium' ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/20' : 
+                                        'text-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                                    }`}>
+                                        {issue.priority}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                        <div class="hidden sm:block">
+                            <!-- Assignee Avatar Placeholder -->
+                            {issue.assignee ? (
+                                <div class="h-6 w-6 rounded-full bg-peach-200 text-peach-800 flex items-center justify-center text-xs font-bold" title={issue.assignee}>
+                                    {issue.assignee[0].toUpperCase()}
+                                </div>
+                            ) : (
+                                <div class="h-6 w-6 rounded-full border border-dashed border-ink-300 dark:border-ink-600 flex items-center justify-center text-ink-300 dark:text-ink-600" title="Unassigned">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                            )}
+                        </div>
+                    </li>
+                ))}
+            </ul>
+        ) : (
+           <div class="flex flex-col items-center justify-center py-16 text-center">
+               <div class="rounded-full bg-surface-100 dark:bg-ink-800 p-4 mb-4">
+                   <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-ink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                   </svg>
+               </div>
+               <h3 class="text-lg font-medium text-ink-900 dark:text-ink-100 mb-1">No issues found</h3>
+               <p class="text-ink-500 dark:text-ink-400 text-sm max-w-sm">
+                   There are no issues matching your current filter. Try adjusting your search or create a new issue.
+               </p>
+               {currentFilter !== 'all' && (
+                   <a href="?status=all" class="mt-4 text-peach-600 dark:text-peach-400 text-sm font-medium hover:underline">
+                       Clear filters
+                   </a>
+               )}
+           </div>
+        )}
+        
+        {/* Pagination Placeholder */}
+        {filteredIssues.length > 0 && (
+            <div class="px-4 py-3 border-t border-ink-100 dark:border-ink-800 bg-surface-50 dark:bg-ink-900/50 flex items-center justify-between">
+                <p class="text-xs text-ink-500 dark:text-ink-400">
+                    Showing <span class="font-medium">{filteredIssues.length}</span> results
+                </p>
+            </div>
+        )}
+    </div>
+
+  </div>
+</AppLayout>

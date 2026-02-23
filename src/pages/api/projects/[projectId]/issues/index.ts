@@ -32,9 +32,9 @@ export const POST: APIRoute = async ({ params, request }) => {
 
   try {
     const body = await request.json();
-    const { listId, title, priority } = body;
+    const { listId, title, priority, description, labels, assignee } = body;
 
-    const issue = await IssueService.createIssue(projectId, listId, title, priority);
+    const issue = await IssueService.createIssue(projectId, listId, title, priority, { description, labels, assignee });
     return new Response(JSON.stringify(issue), {
       status: 201,
       headers: { 'Content-Type': 'application/json' }
