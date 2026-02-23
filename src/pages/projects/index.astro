@@ -166,6 +166,8 @@ const projects = await ProjectService.getAllProjects(showArchived);
         name="repositoryUrl"
         label="Git Repository URL (Optional)"
         placeholder="https://github.com/..."
+        pattern="^(https?:\\/\\/|git@)[\\w.-]+(:|\\/)[\\w.\\/-]+$"
+        title="Must be a valid HTTP/HTTPS URL or Git SSH URL (git@...)"
       />
       <Input
         name="description"
@@ -202,6 +204,8 @@ const projects = await ProjectService.getAllProjects(showArchived);
             id="edit_project_repo"
             label="Git Repository URL (Optional)"
             placeholder="https://github.com/..."
+            pattern="^(https?:\\/\\/|git@)[\\w.-]+(:|\\/)[\\w.\\/-]+$"
+            title="Must be a valid HTTP/HTTPS URL or Git SSH URL (git@...)"
           />
           <Input
             name="description"
@@ -423,7 +427,8 @@ const projects = await ProjectService.getAllProjects(showArchived);
       if (res.ok) {
         window.location.reload();
       } else {
-        alert("Failed to create project");
+        const errorData = await res.json();
+        alert(errorData.error || "Failed to create project");
       }
     } catch (err) {
       console.error(err);
@@ -449,7 +454,8 @@ const projects = await ProjectService.getAllProjects(showArchived);
       if (res.ok) {
         window.location.reload();
       } else {
-        alert("Failed to update project");
+        const errorData = await res.json();
+        alert(errorData.error || "Failed to edit project");
       }
     } catch (err) {
       console.error(err);

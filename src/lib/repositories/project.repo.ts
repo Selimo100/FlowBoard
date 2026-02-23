@@ -19,7 +19,7 @@ const COLLECTION = 'projects';
 export const ProjectRepo = {
   async findAll(includeArchived = false, limit = 50) {
     const db = await getDb();
-    const query = includeArchived ? {} : { isArchived: { $ne: true } };
+    const query: any = includeArchived ? { isArchived: true } : { isArchived: { $ne: true } };
     return db.collection<Project>(COLLECTION)
       .find(query)
       .sort({ createdAt: -1 })

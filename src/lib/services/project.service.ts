@@ -4,6 +4,16 @@
 
 import { ProjectRepo, type Project } from '../repositories/project.repo';
 
+const isValidUrl = (url: string) => {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    // Allow git@ format
+    return /^git@[\w.-]+:[\w./-]+$/.test(url);
+  }
+};
+
 export const ProjectService = {
   async getAllProjects(includeArchived = false) {
     return await ProjectRepo.findAll(includeArchived);
@@ -15,10 +25,16 @@ export const ProjectService = {
 
   async createProject(name: string, description?: string, repositoryUrl?: string) {
     if (!name) throw new Error('Project name is required');
+    if (repositoryUrl && !isValidUrl(repositoryUrl)) {
+      throw new Error('Invalid repository URL');
+    }
     return await ProjectRepo.create({ name, description, repositoryUrl });
   },
 
   async updateProject(id: string, data: Partial<Project>) {
+    if (data.repositoryUrl && !isValidUrl(data.repositoryUrl)) {
+      throw new Error('Invalid repository URL');
+    }
     return await ProjectRepo.update(id, data);
   },
 

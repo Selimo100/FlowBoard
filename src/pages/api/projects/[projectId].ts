@@ -53,9 +53,12 @@ export const PATCH: APIRoute = async (context) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: (error as Error).message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
+    const message = (error as Error).message;
+    const status = message.includes('Invalid') ? 400 : 500;
+
+    return new Response(JSON.stringify({ error: message }), {
+      status,
+      headers: { 'Content-Type': 'application/json' } // Fix status code for validations
     });
   }
 };
