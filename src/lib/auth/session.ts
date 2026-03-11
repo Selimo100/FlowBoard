@@ -1,33 +1,53 @@
+import crypto from 'node:crypto';
 import type { AstroCookies } from 'astro';
+import { ObjectId } from 'mongodb';
+import { SESSION_TTL_DAYS } from '../config/env';
+import * as SessionRepo from '../repositories/session.repo';
+import { setSessionCookie, clearSessionCookie } from './cookies';
+import { findUserById, type User } from '../repositories/user.repo';
 
-export const SESSION_COOKIE = 'flowboard_session';
+export async function createSession(cookies: AstroCookies, userId: string | ObjectId, userAgent?: string, ip?: string): Promise<string> {
+  const token = crypto.randomBytes(32).toString('hex');
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + SESSION_TTL_DAYS);
 
-export interface UserSession {
-  email: string;
-}
-
-export function createSession(cookies: AstroCookies, user: UserSession) {
-  cookies.set(SESSION_COOKIE, JSON.stringify(user), {
-    path: '/',
-    httpOnly: true,
-    secure: import.meta.env.PROD,
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 7 // 1 week
+  await SessionRepo.createSession({
+    userId: new ObjectId(userId),
+    tokenHash,
+    createdAt: new Date(),
+    expiresAt,
+    userAgent,
+    ip,
   });
+
+  setSessionCookie(cookies, token);
+  return token;
 }
 
-export function getSession(cookies: AstroCookies): UserSession | null {
-  const session = cookies.get(SESSION_COOKIE)?.value;
+export async function getSessionFromRequest(cookies: AstroCookies): Promise<{ session: SessionRepo.Session, user: User } | null> {
+  const token = cookies.get('flowboard_session')?.value;
+  
+  if (!token) return null;
+  
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  const session = await SessionRepo.findValidSessionByTokenHash(tokenHash);
+  
   if (!session) return null;
-  try {
-    return JSON.parse(session);
-  } catch (e) {
-    return null;
-  }
+
+  const user = await findUserById(session.userId);
+  if (!user) return null;
+
+  return { session, user };
 }
 
-export function destroySession(cookies: AstroCookies) {
-  cookies.delete(SESSION_COOKIE, {
-    path: '/'
-  });
+export async function revokeSession(cookies: AstroCookies) {
+  const token = cookies.get('flowboard_session')?.value;
+  if (token) {
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    await SessionRepo.revokeByTokenHash(tokenHash);
+  }
+  clearSessionCookie(cookies);
 }
+

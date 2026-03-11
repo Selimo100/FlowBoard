@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro';
-import { destroySession } from '../../../lib/auth/session';
+import { revokeSession } from '../../../lib/auth/session';
 
-export const POST: APIRoute = async ({ cookies, redirect }) => {
-  destroySession(cookies);
-  return redirect('/login');
+export const POST: APIRoute = async ({ cookies }) => {
+  await revokeSession(cookies);
+  return new Response(JSON.stringify({ ok: true }), { status: 200 });
 };
+

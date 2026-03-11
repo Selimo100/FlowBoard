@@ -4,11 +4,11 @@
 
 import type { APIRoute } from 'astro';
 import { ProjectService } from '../../../lib/services/project.service';
-import { requireAuthApi } from '../../../lib/auth/guards';
+import { requireApiUser } from '../../../lib/auth/guards';
 
 export const GET: APIRoute = async (context) => {
-  const user = requireAuthApi(context);
-  if (user instanceof Response) return user;
+  const userOrResponse = await requireApiUser(context);
+  if (userOrResponse instanceof Response) return userOrResponse;
 
   try {
     const projects = await ProjectService.getAllProjects();
@@ -25,8 +25,8 @@ export const GET: APIRoute = async (context) => {
 };
 
 export const POST: APIRoute = async (context) => {
-  const user = requireAuthApi(context);
-  if (user instanceof Response) return user;
+  const userOrResponse = await requireApiUser(context);
+  if (userOrResponse instanceof Response) return userOrResponse;
 
   try {
     const body = await context.request.json();
@@ -46,8 +46,11 @@ export const POST: APIRoute = async (context) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: (error as Error).message }), {
-      status: 500,
+    const message = (error as Error).message;
+    const status = message.includes('required') || message.includes('Invalid') ? 400 : 500;
+
+    return new Response(JSON.stringify({ error: message }), {
+      status,
       headers: { 'Content-Type': 'application/json' }
     });
   }

@@ -1,9 +1,13 @@
 import type { APIRoute } from 'astro';
 import { ProjectService } from '../../../lib/services/project.service';
+import { requireApiUser } from '../../../lib/auth/guards';
 
-export const GET: APIRoute = async ({ params }) => {
+export const GET: APIRoute = async (context) => {
+  const userOrResponse = await requireApiUser(context);
+  if (userOrResponse instanceof Response) return userOrResponse;
+
   try {
-    const { projectId } = params;
+    const { projectId } = context.params;
     if (!projectId) return new Response(null, { status: 404 });
 
     const project = await ProjectService.getProjectById(projectId);
@@ -26,12 +30,15 @@ export const GET: APIRoute = async ({ params }) => {
   }
 };
 
-export const PATCH: APIRoute = async ({ params, request }) => {
+export const PATCH: APIRoute = async (context) => {
+  const userOrResponse = await requireApiUser(context);
+  if (userOrResponse instanceof Response) return userOrResponse;
+
   try {
-    const { projectId } = params;
+    const { projectId } = context.params;
     if (!projectId) return new Response(null, { status: 404 });
 
-    const body = await request.json();
+    const body = await context.request.json();
     const result = await ProjectService.updateProject(projectId, body);
 
     if (!result) {
@@ -46,9 +53,12 @@ export const PATCH: APIRoute = async ({ params, request }) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: (error as Error).message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
+    const message = (error as Error).message;
+    const status = message.includes('Invalid') ? 400 : 500;
+
+    return new Response(JSON.stringify({ error: message }), {
+      status,
+      headers: { 'Content-Type': 'application/json' } // Fix status code for validations
     });
   }
 };

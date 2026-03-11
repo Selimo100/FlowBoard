@@ -1,15 +1,50 @@
 ---
+const currentPath = new URL(Astro.request.url).pathname;
+const projectMatch = currentPath.match(/^\/projects\/([^\/]+)/);
+const projectId = projectMatch ? projectMatch[1] : null;
+
 const links = [
   { href: "/projects", label: "Projects", icon: "grid" },
-  { href: "/board", label: "Board", icon: "kanban" },
+  // If we are in a project, show Board and Issues for that project
+  ...(projectId
+    ? [
+        { href: `/projects/${projectId}`, label: "Board", icon: "kanban" },
+        {
+          href: `/projects/${projectId}/issues`,
+          label: "Issues",
+          icon: "list",
+        },
+      ]
+    : [
+        // Fallback or global links if not in a project
+        { href: "/board", label: "Board", icon: "kanban" },
+      ]),
   { href: "/sprints", label: "Sprints", icon: "activity" },
   { href: "/settings", label: "Settings", icon: "settings" },
 ];
 
-const currentPath = new URL(Astro.request.url).pathname;
+// Helper to determine if a link is active
+const isActive = (href) => {
+  if (href === "/projects") {
+    // Projects active if path is exactly /projects or /projects/
+    return currentPath === "/projects" || currentPath === "/projects/";
+  }
+  // For dynamic project links, exact match or sub-paths (unless it's another main link)
+  if (projectId && href.startsWith(`/projects/${projectId}`)) {
+    if (href === `/projects/${projectId}`) {
+      // Board view: active on exact match or if no other sub-route matched (default)
+      // But strict equality is better if we have explicit links for others
+      return currentPath === href || currentPath === href + "/";
+    }
+    return currentPath.startsWith(href);
+  }
 
-const isActive = (href) =>
-  href === "/" ? currentPath === "/" : currentPath.startsWith(href);
+  if (href === "/board") {
+    return currentPath === "/board";
+  }
+
+  return currentPath.startsWith(href);
+};
 ---
 
 <aside
@@ -38,10 +73,9 @@ const isActive = (href) =>
           href={link.href}
           aria-current={isActive(link.href) ? "page" : undefined}
           class:list={[
-            "group flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-colors duration-200",
-            "focus:outline-none focus-visible:ring-2 focus-visible:ring-peach-200/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
+            "flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200 group",
             isActive(link.href)
-              ? "bg-white/18 text-white"
+              ? "bg-white/20 font-semibold shadow-inner text-white"
               : "text-white/80 hover:bg-white/10 hover:text-white",
           ]}
         >
@@ -83,7 +117,21 @@ const isActive = (href) =>
                 />
               </svg>
             )}
-
+            {link.icon === "list" && (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 17.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
+                />
+              </svg>
+            )}
             {link.icon === "activity" && (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -134,32 +182,6 @@ const isActive = (href) =>
       ))
     }
   </nav>
-
-  <!-- Bottom card -->
-  <div class="absolute bottom-6 left-0 right-0 px-4">
-    <div class="rounded-2xl border border-white/10 bg-white/10 p-4">
-      <p
-        class="text-xs uppercase tracking-wider text-white/60 font-semibold mb-2"
-      >
-        My Team
-      </p>
-
-      <div class="flex items-center gap-2">
-        <div
-          class="w-9 h-9 rounded-full bg-white/14 ring-1 ring-white/15 flex items-center justify-center text-white font-semibold text-xs"
-          aria-hidden="true"
-        >
-          SA
-        </div>
-        <div class="min-w-0">
-          <p class="text-sm font-semibold leading-tight truncate">
-            Sunrise Avengers
-          </p>
-          <p class="text-xs text-white/60 leading-tight">Workspace</p>
-        </div>
-      </div>
-    </div>
-  </div>
 </aside>
 
 <div
