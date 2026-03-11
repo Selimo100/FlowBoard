@@ -48,36 +48,28 @@ export const IssueRepo = {
     return { ...doc, _id: result.insertedId };
   },
 
-  async update(id: string, data: Partial<Issue>) {
+  async update(id: string, updates: Partial<Omit<Issue, '_id' | 'createdAt'>>) {
     const db = await getDb();
     if (!ObjectId.isValid(id)) return null;
     
-    const updateData = {
-      ...data,
-      updatedAt: new Date()
-    };
-    delete (updateData as any)._id; 
-
-    // Helper to ensure projectId is not changed accidentally if passed
-    if ((updateData as any).projectId) delete (updateData as any).projectId;
-
-    const result = await db.collection<Issue>(COLLECTION).findOneAndUpdate(
+    const result = await db.collection<Issue>(COLLECTION).updateOne(
       { _id: new ObjectId(id) },
-      { $set: updateData },
-      { returnDocument: 'after' }
+      { 
+        $set: {
+          ...updates,
+          updatedAt: new Date(),
+        } 
+      }
     );
-    return result;
+    
+    if (result.matchedCount === 0) return null;
+    return this.findById(id);
   },
 
   async delete(id: string) {
     const db = await getDb();
     if (!ObjectId.isValid(id)) return false;
-    const result = await db.collection(COLLECTION).deleteOne({ _id: new ObjectId(id) });
+    const result = await db.collection<Issue>(COLLECTION).deleteOne({ _id: new ObjectId(id) });
     return result.deletedCount === 1;
   },
-
-  async countInList(projectId: string, listId: string) {
-      const db = await getDb();
-      return db.collection(COLLECTION).countDocuments({ projectId, listId });
-  }
 };

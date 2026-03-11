@@ -1,12 +1,13 @@
 ---
 // Explanation: A reusable Button component that supports different variants (primary, secondary, ghost).
 // It wraps the standard HTML button element with Tailwind classes for consistent styling across the app.
+import type { HTMLAttributes } from "astro/types";
 
-interface Props {
+interface Props extends HTMLAttributes<"button"> {
   variant?: "primary" | "secondary" | "ghost";
   type?: "button" | "submit" | "reset";
   class?: string;
-  id?: string;
+  // id, type, etc are handled by extended props
 }
 
 const {

@@ -53,6 +53,15 @@ export const IssueService = {
   },
 
   async updateIssue(id: string, updates: Partial<Issue>) {
+    // Validation
+    if (updates.title !== undefined && !updates.title.trim()) {
+      throw new Error('Title is required');
+    }
+
+    if (updates.priority && !['Low', 'Medium', 'High'].includes(updates.priority)) {
+      throw new Error('Invalid priority');
+    }
+
     // Prevent updating critical fields via generic update if needed
     // But for now allow flexibility
     return await IssueRepo.update(id, updates);
