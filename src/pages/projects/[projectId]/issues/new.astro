@@ -108,14 +108,15 @@ const defaultListId = defaultList ? defaultList.id : "";
               <label
                 class="block text-sm font-medium text-ink-700 dark:text-ink-200 mb-1"
               >
-                Assignee
+                Priority
               </label>
               <select
-                name="assignee"
+                name="priority"
                 class="block w-full rounded-xl border-ink-200 dark:border-ink-700 bg-surface-50 dark:bg-ink-900 shadow-sm focus:border-peach-500 focus:ring-peach-500 sm:text-sm py-2.5 px-3"
               >
-                <option value="">Unassigned</option>
-                <option value="Me">Assign to me</option>
+                <option value="Low">Low</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="High">High</option>
               </select>
             </div>
 
@@ -135,22 +136,6 @@ const defaultListId = defaultList ? defaultList.id : "";
           </div>
 
           <div class="space-y-4">
-            <div>
-              <label
-                class="block text-sm font-medium text-ink-700 dark:text-ink-200 mb-1"
-              >
-                Priority
-              </label>
-              <select
-                name="priority"
-                class="block w-full rounded-xl border-ink-200 dark:border-ink-700 bg-surface-50 dark:bg-ink-900 shadow-sm focus:border-peach-500 focus:ring-peach-500 sm:text-sm py-2.5 px-3"
-              >
-                <option value="Low">Low</option>
-                <option value="Medium" selected>Medium</option>
-                <option value="High">High</option>
-              </select>
-            </div>
-
             <div>
               <label
                 class="block text-sm font-medium text-ink-700 dark:text-ink-200 mb-1"
