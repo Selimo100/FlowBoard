@@ -16,5 +16,7 @@ interface Window {
   deleteList: (listId: string) => void;
   toggleMenu: (e: Event, btn: HTMLElement) => void;
   filterIssues: () => void;
+  filterListIssues: () => void;
+  toggleIssueDetails: (issueId: string) => void;
   openDeleteIssueDialog: (issueId: string) => void;
 }

@@ -9,6 +9,7 @@ import type { Issue } from "../../../../lib/repositories/issue.repo";
 const { projectId } = Astro.params;
 let project: any;
 let issues: any[] = [];
+let uniqueLabels: string[] = [];
 let openCount = 0;
 let closedCount = 0;
 
@@ -28,6 +29,8 @@ if (projectId) {
       status: closedListIds.includes(issue.listId) ? 'closed' : 'open',
       listName: project.lists.find((l: any) => l.id === issue.listId)?.title || 'Unknown'
     }));
+
+    uniqueLabels = Array.from(new Set(issues.flatMap((issue) => issue.labels || []))).sort();
     
     openCount = issues.filter(i => i.status === 'open').length;
     closedCount = issues.filter(i => i.status === 'closed').length;
@@ -84,13 +87,40 @@ const filteredIssues = currentFilter === 'all'
        </div>
        
        <!-- Actions -->
-       <div class="flex gap-3 w-full sm:w-auto">
-           <div class="relative flex-1 sm:w-64">
-               <input type="text" placeholder="Search or filter results..." class="w-full pl-9 pr-4 py-2 rounded-xl bg-surface-50 dark:bg-ink-900 border border-ink-200 dark:border-ink-700 text-sm focus:outline-none focus:ring-2 focus:ring-peach-500/50" />
+       <div class="flex gap-3 w-full sm:w-auto items-center flex-wrap">
+           <div class="relative flex-1 sm:w-64 min-w-[200px]">
+               <input 
+                 type="text" 
+                 id="issue-search-input"
+                 placeholder="Search or filter results..." 
+                 class="w-full pl-9 pr-4 py-2 rounded-xl bg-surface-50 dark:bg-ink-900 border border-ink-200 dark:border-ink-700 text-sm focus:outline-none focus:ring-2 focus:ring-peach-500/50" 
+                 oninput="filterListIssues()"
+               />
                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-3 top-3 text-ink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                </svg>
            </div>
+           
+           <select 
+             id="issue-priority-filter" 
+             onchange="filterListIssues()"
+             class="h-9 px-3 rounded-xl bg-surface-50 dark:bg-ink-900 border border-ink-200 dark:border-ink-700 text-sm focus:outline-none focus:ring-2 focus:ring-peach-500/50"
+           >
+             <option value="">Priority</option>
+             <option value="Low">Low</option>
+             <option value="Medium">Medium</option>
+             <option value="High">High</option>
+           </select>
+
+           <select 
+             id="issue-label-filter" 
+             onchange="filterListIssues()"
+             class="h-9 px-3 rounded-xl bg-surface-50 dark:bg-ink-900 border border-ink-200 dark:border-ink-700 text-sm focus:outline-none focus:ring-2 focus:ring-peach-500/50"
+           >
+             <option value="">Label</option>
+             {uniqueLabels.map(l => <option value={l}>{l}</option>)}
+           </select>
+
            <a href={`/projects/${projectId}/issues/new`} class="px-4 py-2 bg-peach-500 hover:bg-peach-600 text-white rounded-xl text-sm font-medium transition-colors shadow-sm shadow-peach-500/30 flex items-center justify-center whitespace-nowrap">
                New issue
            </a>
@@ -102,7 +132,12 @@ const filteredIssues = currentFilter === 'all'
         {filteredIssues.length > 0 ? (
             <ul class="divide-y divide-ink-100 dark:divide-ink-800">
                 {filteredIssues.map((issue) => (
-                    <li class="hover:bg-surface-100 dark:hover:bg-ink-800/50 transition-colors group flex flex-col">
+                    <li 
+                      class="hover:bg-surface-100 dark:hover:bg-ink-800/50 transition-colors group flex flex-col issue-list-item"
+                      data-title={(issue.title || '').toLowerCase()}
+                      data-priority={issue.priority || ''}
+                      data-labels={JSON.stringify(issue.labels || [])}
+                    >
                         <div class="p-4 flex items-start gap-4 cursor-pointer" onclick={`toggleIssueDetails('${issue._id}')`}>
                             <div class="pt-1">
                                {issue.status === 'open' ? (
@@ -229,6 +264,39 @@ const filteredIssues = currentFilter === 'all'
         if (chevron) {
             chevron.style.transform = details.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
         }
+    };
+
+    window.filterListIssues = function() {
+      const searchInput = document.getElementById('issue-search-input');
+      const priorityInput = document.getElementById('issue-priority-filter');
+      const labelInput = document.getElementById('issue-label-filter');
+      
+      const search = (searchInput?.value || '').toLowerCase();
+      const priority = priorityInput?.value || '';
+      const label = labelInput?.value || '';
+
+      const items = document.querySelectorAll('.issue-list-item');
+      let visibleCount = 0;
+
+      items.forEach(item => {
+          const title = item.getAttribute('data-title') || '';
+          const itemPriority = item.getAttribute('data-priority') || '';
+          let itemLabels = [];
+          try {
+             itemLabels = JSON.parse(item.getAttribute('data-labels') || '[]');
+          } catch(e) {}
+
+          const matchesSearch = title.includes(search);
+          const matchesPriority = priority === '' || itemPriority === priority;
+          const matchesLabel = label === '' || itemLabels.includes(label);
+
+          if (matchesSearch && matchesPriority && matchesLabel) {
+              item.classList.remove('hidden');
+              visibleCount++;
+          } else {
+              item.classList.add('hidden');
+          }
+      });
     };
   </script>
 </AppLayout>

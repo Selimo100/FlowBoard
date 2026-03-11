@@ -38,6 +38,8 @@ if (!project) {
   return Astro.redirect("/404");
 }
 
+const uniqueLabels = Array.from(new Set(issues.flatMap((issue) => issue.labels || []))).sort();
+
 const lists = project.lists || [];
 const colorOptions = [
   "#6b7280",
@@ -112,6 +114,19 @@ const colorOptions = [
           <option value="Low">Low</option>
           <option value="Medium">Medium</option>
           <option value="High">High</option>
+        </select>
+
+        <select
+          id="issue-label-filter"
+          class="h-10 px-3 rounded-xl bg-surface-50 dark:bg-ink-900 border border-ink-200 dark:border-ink-700 text-sm focus:outline-none focus:ring-2 focus:ring-peach-500/50"
+          onchange="filterIssues()"
+        >
+          <option value="">All Labels</option>
+          {
+            uniqueLabels.map((label) => (
+              <option value={label}>{label}</option>
+            ))
+          }
         </select>
 
         <div class="h-6 w-px bg-ink-200 dark:bg-ink-700 mx-1"></div>
@@ -819,10 +834,13 @@ const colorOptions = [
   window.filterIssues = function () {
     var searchInput = document.getElementById("issue-search") as HTMLInputElement | null;
     var priorityInput = document.getElementById("issue-priority-filter") as HTMLSelectElement | null;
-    if (!searchInput || !priorityInput) return;
+    var labelInput = document.getElementById("issue-label-filter") as HTMLSelectElement | null;
+    
+    if (!searchInput || !priorityInput || !labelInput) return;
 
     var search = searchInput.value.toLowerCase();
     var priority = priorityInput.value;
+    var label = labelInput.value;
 
     var cards = document.querySelectorAll(".issue-card");
 
@@ -841,8 +859,9 @@ const colorOptions = [
       var matchesSearch =
         title.includes(search) || description.includes(search);
       var matchesPriority = !priority || issue.priority === priority;
+      var matchesLabel = !label || (issue.labels && issue.labels.includes(label));
 
-      if (matchesSearch && matchesPriority) {
+      if (matchesSearch && matchesPriority && matchesLabel) {
         element.classList.remove("hidden");
       } else {
         element.classList.add("hidden");

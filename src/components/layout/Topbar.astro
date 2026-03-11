@@ -123,9 +123,9 @@ const initials = (user?.name?.[0] || user?.email?.[0] || "U").toUpperCase();
           aria-haspopup="menu"
           aria-expanded="false"
           onclick="
-            const m = document.getElementById('project-menu');
-            const open = m?.classList.toggle('hidden') === false;
-            this.setAttribute('aria-expanded', String(open));
+            const pm = document.getElementById('project-menu');
+            const pmOpen = pm?.classList.toggle('hidden') === false;
+            this.setAttribute('aria-expanded', String(pmOpen));
           "
         >
           <span class="w-2 h-2 rounded-full bg-peach-500"></span>
@@ -223,9 +223,9 @@ const initials = (user?.name?.[0] || user?.email?.[0] || "U").toUpperCase();
           aria-haspopup="menu"
           aria-expanded="false"
           onclick="
-            const m = document.getElementById('user-menu');
-            const open = m?.classList.toggle('hidden') === false;
-            this.setAttribute('aria-expanded', String(open));
+            const um = document.getElementById('user-menu');
+            const umOpen = um?.classList.toggle('hidden') === false;
+            this.setAttribute('aria-expanded', String(umOpen));
           "
         >
           <span
