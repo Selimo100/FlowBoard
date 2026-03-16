@@ -3,6 +3,8 @@
 // It validates input (like ensuring a name exists) before asking the repository to save data.
 
 import { ProjectRepo, type Project, type ProjectList } from '../repositories/project.repo';
+import { ProjectMemberRepo } from '../repositories/project-member.repo';
+import { ObjectId } from 'mongodb';
 import { v4 as uuidv4 } from 'uuid';
 
 const DEFAULT_LISTS = [
@@ -28,15 +30,25 @@ const isValidUrl = (url: string) => {
 };
 
 export const ProjectService = {
-  async getAllProjects(includeArchived = false) {
-    return await ProjectRepo.findAll(includeArchived);
+  async getAllProjects(includeArchived = false, userId?: string) {
+    let ids: ObjectId[] | undefined;
+    if (userId) {
+      ids = await ProjectMemberRepo.getProjectIdsForUser(userId);
+      // If user has no projects, return empty list immediately to avoid query findAll({})
+      if (ids.length === 0) return [];
+    }
+    return await ProjectRepo.findAll(includeArchived, 50, ids);
   },
 
-  async getProjectById(id: string) {
+  async getProjectById(id: string, userId?: string) {
+    if (userId) {
+      const isMember = await ProjectMemberRepo.isProjectMember(id, userId);
+      if (!isMember) return null;
+    }
     return await ProjectRepo.findById(id);
   },
 
-  async createProject(name: string, description?: string, repositoryUrl?: string) {
+  async createProject(name: string, description?: string, repositoryUrl?: string, userId?: string) {
     if (!name) throw new Error('Project name is required');
     if (repositoryUrl && !isValidUrl(repositoryUrl)) {
       throw new Error('Invalid repository URL');
@@ -49,7 +61,17 @@ export const ProjectService = {
       color: DEFAULT_COLOR
     }));
 
-    return await ProjectRepo.create({ name, description, repositoryUrl, lists });
+    const project = await ProjectRepo.create({ name, description, repositoryUrl, lists });
+
+    if (userId && project._id) {
+      await ProjectMemberRepo.addMember({
+        projectId: project._id,
+        userId: new ObjectId(userId),
+        role: 'owner'
+      });
+    }
+
+    return project;
   },
 
   async addList(projectId: string, title: string, color?: string) {

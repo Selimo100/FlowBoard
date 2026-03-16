@@ -34,8 +34,43 @@ export async function createUser(user: Omit<User, '_id' | 'createdAt' | 'updated
 
 export async function findUserById(id: string | ObjectId): Promise<User | null> {
   const db = await getDb();
-  const _id = typeof id === 'string' ? new ObjectId(id) : id;
+  let _id: ObjectId;
+  try {
+    _id = typeof id === 'string' ? new ObjectId(id) : id;
+  } catch (e) {
+    return null; // Invalid ID format
+  }
   return db.collection<User>(COLLECTION).findOne({ _id });
+}
+
+export async function updateUserName(id: string | ObjectId, name: string): Promise<boolean> {
+  const db = await getDb();
+  const _id = typeof id === 'string' ? new ObjectId(id) : id;
+  const result = await db.collection<User>(COLLECTION).updateOne(
+    { _id },
+    { 
+      $set: { 
+        name,
+        updatedAt: new Date()
+      } 
+    }
+  );
+  return result.matchedCount > 0;
+}
+
+export async function updateUserPassword(id: string | ObjectId, passwordHash: string): Promise<boolean> {
+  const db = await getDb();
+  const _id = typeof id === 'string' ? new ObjectId(id) : id;
+  const result = await db.collection<User>(COLLECTION).updateOne(
+    { _id },
+    { 
+      $set: { 
+        passwordHash,
+        updatedAt: new Date()
+      } 
+    }
+  );
+  return result.matchedCount > 0;
 }
 
 export async function ensureUserIndexes() {

@@ -25,9 +25,14 @@ export interface Project {
 const COLLECTION = 'projects';
 
 export const ProjectRepo = {
-  async findAll(includeArchived = false, limit = 50) {
+  async findAll(includeArchived = false, limit = 50, ids?: ObjectId[]) {
     const db = await getDb();
     const query: any = includeArchived ? { isArchived: true } : { isArchived: { $ne: true } };
+    
+    if (ids) {
+      query._id = { $in: ids };
+    }
+
     return db.collection<Project>(COLLECTION)
       .find(query)
       .sort({ createdAt: -1 })
