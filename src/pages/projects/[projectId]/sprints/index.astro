@@ -248,7 +248,7 @@ const activeSprint = sprints.find((s) => s.status === "active");
    * activateSprint is now handled by StartSprintDialog
    */
 
-  window.completeSprint = async (sprintId) => {
+  window.completeSprint = async (sprintId: string) => {
     if (!confirm("Are you sure you want to complete this sprint?")) return;
 
     try {

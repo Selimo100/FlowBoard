@@ -19,4 +19,8 @@ interface Window {
   filterListIssues: () => void;
   toggleIssueDetails: (issueId: string) => void;
   openDeleteIssueDialog: (issueId: string) => void;
+  toast: { success: (msg: string) => void; error: (msg: string) => void };
+  editSprint: (sprintId: string) => Promise<void>;
+  removeFromSprint: (issueId: string) => Promise<void>;
+  completeSprint: (sprintId: string) => Promise<void>;
 }

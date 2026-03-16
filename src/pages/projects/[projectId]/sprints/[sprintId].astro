@@ -127,7 +127,7 @@ const { sprint, issues, stats } = overview;
 </AppLayout>
 
 <script>
-    window.removeFromSprint = async (issueId) => {
+    window.removeFromSprint = async (issueId: string) => {
         if(!confirm('Remove this issue from the sprint?')) return;
         try {
             const res = await fetch(`/api/issues/${issueId}/sprint`, { method: 'DELETE' });

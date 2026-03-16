@@ -83,39 +83,50 @@ const id = "edit_sprint_modal";
 </Modal>
 
 <script>
-  window.editSprint = async (sprintId) => {
+  window.editSprint = async (sprintId: string) => {
     try {
       const res = await fetch(`/api/sprints/${sprintId}`);
       const sprint = await res.json();
 
       if (sprint && !sprint.error) {
-        const modal = document.getElementById("edit_sprint_modal");
+        const modal = document.getElementById(
+          "edit_sprint_modal",
+        ) as HTMLDialogElement;
 
-        document.getElementById("edit_sprint_id").value = sprint._id;
-        document.getElementById("edit_sprint_name").value = sprint.name || "";
-        document.getElementById("edit_sprint_goal").value = sprint.goal || "";
+        (document.getElementById("edit_sprint_id") as HTMLInputElement).value =
+          sprint._id;
+        (
+          document.getElementById("edit_sprint_name") as HTMLInputElement
+        ).value = sprint.name || "";
+        (
+          document.getElementById("edit_sprint_goal") as HTMLInputElement
+        ).value = sprint.goal || "";
 
         if (sprint.startDate) {
-          document.getElementById("edit_sprint_start_date").value = new Date(
-            sprint.startDate,
-          )
-            .toISOString()
-            .split("T")[0];
+          (
+            document.getElementById(
+              "edit_sprint_start_date",
+            ) as HTMLInputElement
+          ).value = new Date(sprint.startDate).toISOString().split("T")[0];
         } else {
-          document.getElementById("edit_sprint_start_date").value = "";
+          (
+            document.getElementById(
+              "edit_sprint_start_date",
+            ) as HTMLInputElement
+          ).value = "";
         }
 
         if (sprint.endDate) {
-          document.getElementById("edit_sprint_end_date").value = new Date(
-            sprint.endDate,
-          )
-            .toISOString()
-            .split("T")[0];
+          (
+            document.getElementById("edit_sprint_end_date") as HTMLInputElement
+          ).value = new Date(sprint.endDate).toISOString().split("T")[0];
         } else {
-          document.getElementById("edit_sprint_end_date").value = "";
+          (
+            document.getElementById("edit_sprint_end_date") as HTMLInputElement
+          ).value = "";
         }
 
-        modal.showModal();
+        modal?.showModal();
       } else {
         alert("Failed to load sprint details");
       }
@@ -128,7 +139,7 @@ const id = "edit_sprint_modal";
   const form = document.getElementById("edit_sprint_form");
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
+    const formData = new FormData(e.target as HTMLFormElement);
     const data = Object.fromEntries(formData);
     const sprintId = data.sprintId;
 

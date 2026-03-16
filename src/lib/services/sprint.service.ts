@@ -25,9 +25,7 @@ export const SprintService = {
       goal: data.goal,
       status: 'planned' as SprintStatus,
       startDate: data.startDate ? new Date(data.startDate) : undefined,
-      endDate: data.endDate ? new Date(data.endDate) : undefined,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      endDate: data.endDate ? new Date(data.endDate) : undefined
     };
 
     const sprint = await SprintRepo.create(sprintData);

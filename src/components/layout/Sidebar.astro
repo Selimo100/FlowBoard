@@ -28,7 +28,7 @@ const links = [
 ];
 
 // Helper to determine if a link is active
-const isActive = (href) => {
+const isActive = (href: string) => {
   if (href === "/projects") {
     // Projects active if path is exactly /projects or /projects/
     return currentPath === "/projects" || currentPath === "/projects/";
