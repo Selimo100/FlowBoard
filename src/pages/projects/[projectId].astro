@@ -528,11 +528,16 @@ const colorOptions = [
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (res.ok) window.location.reload();
-      else alert("Failed to create list");
+      if (res.ok) {
+        window.toast.success("List created successfully!");
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        window.toast.error(errorData.error || "Failed to create list");
+      }
     } catch (err) {
       console.error(err);
-      alert("Error creating list");
+      window.toast.error("Error creating list");
     }
   });
 
@@ -550,11 +555,16 @@ const colorOptions = [
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (res.ok) window.location.reload();
-      else alert("Failed to update list");
+      if (res.ok) {
+        window.toast.success("List updated");
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        window.toast.error(errorData.error || "Failed to update list");
+      }
     } catch (err) {
       console.error(err);
-      alert("Error updating list");
+      window.toast.error("Error updating list");
     }
   });
 
@@ -617,11 +627,16 @@ const colorOptions = [
         method: "DELETE",
       });
 
-      if (res.ok) window.location.reload();
-      else alert("Failed to delete list");
+      if (res.ok) {
+        window.toast.success("List deleted");
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        window.toast.error(errorData.error || "Failed to delete list");
+      }
     } catch (err) {
       console.error(err);
-      alert("Error deleting list");
+      window.toast.error("Error deleting list");
     }
   };
 
@@ -674,6 +689,7 @@ const colorOptions = [
         });
       } catch (err) {
         console.error("Failed to save order", err);
+        window.toast.error("Failed to save order");
       }
 
       draggedList = null;
@@ -741,13 +757,15 @@ const colorOptions = [
       });
 
       if (res.ok) {
-        window.location.reload();
+        window.toast.success("Issue created");
+        setTimeout(() => window.location.reload(), 1000);
       } else {
-        alert("Failed to create issue");
+        const errorData = await res.json().catch(() => ({}));
+        window.toast.error(errorData.error || "Failed to create issue");
       }
     } catch (err) {
       console.error(err);
-      alert("Error creating issue");
+      window.toast.error("Error creating issue");
     }
   });
 
@@ -802,7 +820,7 @@ const colorOptions = [
         });
       } catch (err) {
         console.error("Failed to move issue", err);
-        alert("Failed to move issue");
+        window.toast.error("Failed to move issue");
       }
 
       draggedIssue = null;

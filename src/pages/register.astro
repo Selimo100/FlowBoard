@@ -101,8 +101,10 @@ if (result) {
             errorDiv.textContent = data.error || "Registration failed";
             errorDiv.classList.remove("hidden");
           }
+          window.toast.error(data.error || "Registration failed");
         } else {
-          window.location.href = "/projects";
+          window.toast.success("Account created! Redirecting...");
+          setTimeout(() => (window.location.href = "/projects"), 1000);
         }
       } catch (err) {
         if (errorDiv) {

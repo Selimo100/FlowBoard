@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import Toast from "../components/ui/Toast.astro";
 ---
 
 <!doctype html>
@@ -20,6 +21,7 @@ import "../styles/global.css";
   <body
     class="bg-surface-50 text-ink-900 font-sans antialiased h-screen flex items-center justify-center p-4"
   >
+    <Toast />
     <slot />
   </body>
 </html>

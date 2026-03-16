@@ -58,13 +58,14 @@ const { id = "start_sprint_modal" } = Astro.props;
       const data = await res.json();
 
       if (res.ok) {
-        window.location.reload();
+        window.toast.success("Sprint activated successfully!");
+        setTimeout(() => window.location.reload(), 1000);
       } else {
-        alert(data.error || "Failed to activate sprint");
+        window.toast.error(data.error || "Failed to activate sprint");
       }
     } catch (err) {
       console.error(err);
-      alert("Error activating sprint");
+      window.toast.error("Error activating sprint");
     } finally {
       confirmBtn.textContent = originalText;
       confirmBtn.disabled = false;

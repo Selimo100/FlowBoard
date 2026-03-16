@@ -97,8 +97,10 @@ if (result) {
             errorDiv.textContent = data.error || "Login failed";
             errorDiv.classList.remove("hidden");
           }
+          window.toast.error(data.error || "Login failed");
         } else {
-          window.location.href = "/projects";
+          window.toast.success("Login successful!");
+          setTimeout(() => (window.location.href = "/projects"), 500);
         }
       } catch (err) {
         if (errorDiv) {

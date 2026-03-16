@@ -345,13 +345,14 @@ const projects = await ProjectService.getAllProjects(showArchived);
         });
 
         if (res.ok) {
-          window.location.reload();
+          window.toast.success("Project updated successfully");
+          setTimeout(() => window.location.reload(), 1000);
         } else {
-          alert("Error updating project status");
+          window.toast.error("Error updating project status");
         }
       } catch (err) {
         console.error(err);
-        alert("Error updating project");
+        window.toast.error("Error updating project");
       }
     });
 </script>
@@ -425,14 +426,15 @@ const projects = await ProjectService.getAllProjects(showArchived);
       });
 
       if (res.ok) {
-        window.location.reload();
+        window.toast.success("Project created successfully");
+        setTimeout(() => window.location.reload(), 1000);
       } else {
-        const errorData = await res.json();
-        alert(errorData.error || "Failed to create project");
+        const errorData = await res.json().catch(() => ({}));
+        window.toast.error(errorData.error || "Failed to create project");
       }
     } catch (err) {
       console.error(err);
-      alert("Error creating project");
+      window.toast.error("Error creating project");
     }
   });
 
@@ -452,14 +454,15 @@ const projects = await ProjectService.getAllProjects(showArchived);
       });
 
       if (res.ok) {
-        window.location.reload();
+        window.toast.success("Project updated successfully");
+        setTimeout(() => window.location.reload(), 1000);
       } else {
-        const errorData = await res.json();
-        alert(errorData.error || "Failed to edit project");
+        const errorData = await res.json().catch(() => ({}));
+        window.toast.error(errorData.error || "Failed to edit project");
       }
     } catch (err) {
       console.error(err);
-      alert("Error updating project");
+      window.toast.error("Error updating project");
     }
   });
 </script>
