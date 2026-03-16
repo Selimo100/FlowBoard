@@ -15,9 +15,10 @@ let openCount = 0;
 let closedCount = 0;
 let activeSprint: any = null;
 
-if (projectId) {
+if (projectId && Astro.locals.user) {
   try {
-    project = await ProjectService.getProjectById(projectId);
+    project = await ProjectService.getProjectById(projectId, Astro.locals.user._id?.toString());
+    if (!project) return Astro.redirect('/projects');
     issues = await IssueService.getIssuesByProject(projectId);
     const sprints = await SprintService.getAllSprints(projectId);
     

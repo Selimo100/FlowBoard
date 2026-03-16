@@ -30,26 +30,55 @@ const isValidUrl = (url: string) => {
 };
 
 export const ProjectService = {
-  async getAllProjects(includeArchived = false, userId?: string) {
-    let ids: ObjectId[] | undefined;
-    if (userId) {
-      ids = await ProjectMemberRepo.getProjectIdsForUser(userId);
-      // If user has no projects, return empty list immediately to avoid query findAll({})
-      if (ids.length === 0) return [];
-    }
-    return await ProjectRepo.findAll(includeArchived, 50, ids);
+  async getAllProjects(includeArchived = false, userId: string) {
+    if (!userId) return [];
+    return await ProjectRepo.listVisibleProjectsForUser(userId, includeArchived);
+  },
+
+  async listDashboardProjects(userId: string) {
+    return this.getAllProjects(false, userId);
   },
 
   async getProjectById(id: string, userId?: string) {
+    const project = await ProjectRepo.findById(id);
+    if (!project) return null;
+    
     if (userId) {
-      const isMember = await ProjectMemberRepo.isProjectMember(id, userId);
-      if (!isMember) return null;
+      const hasAccess = await this.userCanAccessProject(id, userId);
+      if (!hasAccess) return null;
     }
-    return await ProjectRepo.findById(id);
+    return project;
+  },
+
+  async userCanAccessProject(projectId: string, userId: string): Promise<boolean> {
+    const project = await ProjectRepo.findById(projectId);
+    if (!project) return false;
+    
+    if (project.ownerId?.toString() === userId) return true;
+    
+    return await ProjectMemberRepo.isProjectMember(projectId, userId);
+  },
+
+  async requireProjectAccess(projectId: string, userId: string) {
+    const hasAccess = await this.userCanAccessProject(projectId, userId);
+    if (!hasAccess) {
+      throw new Error('Project access denied');
+    }
+  },
+
+  async requireProjectOwner(projectId: string, userId: string) {
+    const project = await ProjectRepo.findById(projectId);
+    if (!project) throw new Error('Project not found');
+    
+    if (project.ownerId?.toString() !== userId) {
+      throw new Error('Project ownership required');
+    }
   },
 
   async createProject(name: string, description?: string, repositoryUrl?: string, userId?: string) {
     if (!name) throw new Error('Project name is required');
+    if (!userId) throw new Error('User ID is required to create a project');
+
     if (repositoryUrl && !isValidUrl(repositoryUrl)) {
       throw new Error('Invalid repository URL');
     }
@@ -61,13 +90,20 @@ export const ProjectService = {
       color: DEFAULT_COLOR
     }));
 
-    const project = await ProjectRepo.create({ name, description, repositoryUrl, lists });
+    const project = await ProjectRepo.create({
+      name,
+      description,
+      repositoryUrl,
+      lists,
+      ownerId: new ObjectId(userId)
+    });
 
-    if (userId && project._id) {
+    if (project._id) {
       await ProjectMemberRepo.addMember({
         projectId: project._id,
         userId: new ObjectId(userId),
-        role: 'owner'
+        role: 'owner',
+        invitedBy: new ObjectId(userId)
       });
     }
 

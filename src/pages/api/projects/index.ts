@@ -11,7 +11,7 @@ export const GET: APIRoute = async (context) => {
   if (userOrResponse instanceof Response) return userOrResponse;
 
   try {
-    const projects = await ProjectService.getAllProjects(false, userOrResponse.user._id.toString());
+    const projects = await ProjectService.getAllProjects(false, userOrResponse._id.toString());
     return new Response(JSON.stringify(projects), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
@@ -39,7 +39,7 @@ export const POST: APIRoute = async (context) => {
       });
     }
 
-    const project = await ProjectService.createProject(name, description, repositoryUrl, userOrResponse.user._id.toString());
+    const project = await ProjectService.createProject(name, description, repositoryUrl, userOrResponse._id.toString());
     
     return new Response(JSON.stringify(project), {
       status: 201,

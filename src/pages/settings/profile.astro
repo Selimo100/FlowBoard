@@ -7,7 +7,7 @@ import { getSessionFromRequest } from "../../lib/auth/session";
 import { UserService } from "../../lib/services/user.service";
 
 const session = await getSessionFromRequest(Astro.cookies);
-if (!session) return Astro.redirect("/login");
+if (!session || !session.user._id) return Astro.redirect("/login");
 
 const user = await UserService.getUserProfile(session.user._id.toString());
 if (!user) return Astro.redirect("/login"); // Should not happen

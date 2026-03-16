@@ -6,17 +6,21 @@
 // - aria-expanded correct
 
 import { ProjectService } from "../../lib/services/project.service";
+import type { User } from "../../lib/repositories/user.repo";
 
 interface Props {
-  user?: { email: string; name?: string };
+  user?: User;
 }
 
 const { user } = Astro.props;
 
 let projects: any[] = [];
-try {
-  projects = await ProjectService.getAllProjects();
-} catch (e) {}
+// Use optional chaining and ensure _id exists and convert to string
+if (user?._id) {
+  try {
+    projects = await ProjectService.getAllProjects(false, user._id.toString());
+  } catch (e) {}
+}
 
 const url = new URL(Astro.request.url);
 const pathSegments = url.pathname.split("/");

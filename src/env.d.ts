@@ -23,4 +23,7 @@ interface Window {
   editSprint: (sprintId: string) => Promise<void>;
   removeFromSprint: (issueId: string) => Promise<void>;
   completeSprint: (sprintId: string) => Promise<void>;
+  openCompleteSprintDialog: (sprintId: string) => void;
+  openStartSprintDialog: (sprintId: string) => void;
+  openDeleteSprintDialog: (sprintId: string) => void;
 }

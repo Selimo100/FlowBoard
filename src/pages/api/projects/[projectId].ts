@@ -10,10 +10,10 @@ export const GET: APIRoute = async (context) => {
     const { projectId } = context.params;
     if (!projectId) return new Response(null, { status: 404 });
 
-    const project = await ProjectService.getProjectById(projectId);
+    const project = await ProjectService.getProjectById(projectId, userOrResponse._id.toString());
     if (!project) {
       return new Response(JSON.stringify({ error: 'Project not found' }), {
-        status: 404,
+        status: 404, // getProjectById returns null if not found OR not accessible
         headers: { 'Content-Type': 'application/json' }
       });
     }
@@ -37,6 +37,16 @@ export const PATCH: APIRoute = async (context) => {
   try {
     const { projectId } = context.params;
     if (!projectId) return new Response(null, { status: 404 });
+
+    // Only owner can update project settings
+    try {
+      await ProjectService.requireProjectOwner(projectId, userOrResponse._id.toString());
+    } catch (e) {
+      return new Response(JSON.stringify({ error: (e as Error).message }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     const body = await context.request.json();
     const result = await ProjectService.updateProject(projectId, body);
@@ -63,10 +73,23 @@ export const PATCH: APIRoute = async (context) => {
   }
 };
 
-export const DELETE: APIRoute = async ({ params }) => {
+export const DELETE: APIRoute = async (context) => {
+  const userOrResponse = await requireApiUser(context);
+  if (userOrResponse instanceof Response) return userOrResponse;
+
   try {
-    const { projectId } = params;
+    const { projectId } = context.params;
     if (!projectId) return new Response(null, { status: 404 });
+
+    // Only owner can delete project
+    try {
+      await ProjectService.requireProjectOwner(projectId, userOrResponse._id.toString());
+    } catch (e) {
+      return new Response(JSON.stringify({ error: (e as Error).message }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     const success = await ProjectService.deleteProject(projectId);
     if (!success) {

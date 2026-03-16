@@ -12,9 +12,17 @@ import ConfirmModal from "../../components/ui/ConfirmModal.astro";
 import Input from "../../components/ui/Input.astro";
 import { ProjectService } from "../../lib/services/project.service";
 
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect("/login");
+}
+
 const url = new URL(Astro.request.url);
 const showArchived = url.searchParams.get("archived") === "true";
-const projects = await ProjectService.getAllProjects(showArchived);
+const projects = await ProjectService.getAllProjects(
+  showArchived,
+  user._id!.toString(),
+);
 ---
 
 <AppLayout>

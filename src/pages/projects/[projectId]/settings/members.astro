@@ -20,7 +20,10 @@ let error = null;
 
 try {
   // Check if project exists and get basic info
-  project = await ProjectService.getProjectById(projectId);
+  project = await ProjectService.getProjectById(
+    projectId,
+    session.user._id?.toString(),
+  );
   if (!project) return Astro.redirect("/404");
 
   // Get members

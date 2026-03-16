@@ -10,6 +10,8 @@ export const POST: APIRoute = async (context) => {
     const { projectId } = context.params;
     if (!projectId) return new Response(null, { status: 404 });
 
+    await ProjectService.requireProjectAccess(projectId, userOrResponse._id.toString());
+
     const body = await context.request.json();
     const { title, color } = body;
 
@@ -19,8 +21,9 @@ export const POST: APIRoute = async (context) => {
       status: 201,
       headers: { 'Content-Type': 'application/json' }
     });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: (error as Error).message }), {
+  } catch (error: any) {
+    if (error.message === 'Project access denied') return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+    return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
@@ -35,6 +38,8 @@ export const PUT: APIRoute = async (context) => {
     const { projectId } = context.params;
     if (!projectId) return new Response(null, { status: 404 });
 
+    await ProjectService.requireProjectAccess(projectId, userOrResponse._id.toString());
+
     const body = await context.request.json();
     const { listIds } = body; // Array of IDs in new order
 
@@ -48,8 +53,9 @@ export const PUT: APIRoute = async (context) => {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: (error as Error).message }), {
+  } catch (error: any) {
+    if (error.message === 'Project access denied') return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+    return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });

@@ -16,6 +16,7 @@ export interface Project {
   name: string;
   description?: string;
   repositoryUrl?: string;
+  ownerId: ObjectId; // Added ownerId
   lists: ProjectList[];
   isArchived?: boolean;
   createdAt: Date;
@@ -25,7 +26,37 @@ export interface Project {
 const COLLECTION = 'projects';
 
 export const ProjectRepo = {
+  // Find only projects visible to the user: owned OR invited
+  async listVisibleProjectsForUser(userId: string | ObjectId, includeArchived = false, limit = 50) {
+    const db = await getDb();
+    const uId = typeof userId === 'string' ? new ObjectId(userId) : userId;
+    
+    // 1. Get project IDs where user is a member
+    const memberProjects = await db.collection('projectMembers').find({ userId: uId }).project({ projectId: 1 }).toArray();
+    const memberProjectIds = memberProjects.map(mp => mp.projectId);
+
+    // 2. Query projects: OR(ownerId == user, _id IN memberProjectIds)
+    const query: any = {
+      $or: [
+        { ownerId: uId },
+        { _id: { $in: memberProjectIds } }
+      ]
+    };
+
+    if (!includeArchived) {
+      query.isArchived = { $ne: true };
+    }
+
+    return db.collection<Project>(COLLECTION)
+      .find(query)
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .toArray();
+  },
+
   async findAll(includeArchived = false, limit = 50, ids?: ObjectId[]) {
+    // Legacy findAll, can be kept for backward compatibility or refactored out.
+    // For now, let's keep it but advise using listVisibleProjectsForUser for user-scoped queries.
     const db = await getDb();
     const query: any = includeArchived ? { isArchived: true } : { isArchived: { $ne: true } };
     

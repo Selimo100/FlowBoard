@@ -7,6 +7,7 @@ import CreateSprintModal from "../../../../components/sprints/CreateSprintModal.
 import EditSprintModal from "../../../../components/sprints/EditSprintModal.astro";
 import DeleteSprintDialog from "../../../../components/sprints/DeleteSprintDialog.astro";
 import StartSprintDialog from "../../../../components/sprints/StartSprintDialog.astro";
+import CompleteSprintDialog from "../../../../components/sprints/CompleteSprintDialog.astro";
 import Button from "../../../../components/ui/Button.astro";
 
 const { projectId } = Astro.params;
@@ -15,9 +16,10 @@ let sprints: any[] = [];
 let unassignedIssues: any[] = [];
 let project: any;
 
-if (projectId) {
+if (projectId && Astro.locals.user) {
   try {
-    project = await ProjectService.getProjectById(projectId);
+    project = await ProjectService.getProjectById(projectId, Astro.locals.user._id?.toString());
+    if (!project) return Astro.redirect('/projects');
     sprints = await SprintService.getAllSprints(projectId);
     unassignedIssues = await IssueService.getUnassignedIssues(projectId);
   } catch (e) {
@@ -170,7 +172,7 @@ const activeSprint = sprints.find((s) => s.status === "active");
 
                   {sprint.status === "active" && (
                     <button
-                      onclick={`completeSprint('${sprint._id}')`}
+                      onclick={`openCompleteSprintDialog('${sprint._id}')`}
                       class="px-3 py-1.5 bg-peach-100 hover:bg-peach-200 dark:bg-peach-900/30 dark:hover:bg-peach-900/50 text-peach-700 dark:text-peach-300 text-sm font-medium rounded-lg transition-colors"
                     >
                       Complete
@@ -241,32 +243,17 @@ const activeSprint = sprints.find((s) => s.status === "active");
   <EditSprintModal />
   <DeleteSprintDialog />
   <StartSprintDialog />
+  <CompleteSprintDialog />
 </AppLayout>
 
 <script>
   /**
    * activateSprint is now handled by StartSprintDialog
    */
-
-  window.completeSprint = async (sprintId: string) => {
-    if (!confirm("Are you sure you want to complete this sprint?")) return;
-
-    try {
-      const res = await fetch(`/api/sprints/${sprintId}/complete`, { method: "POST" });
-      const data = await res.json();
-
-      if (res.ok) {
-        window.location.reload();
-      } else {
-        alert(data.error || "Failed to complete sprint");
-      }
-    } catch (e) {
-      alert("Error completing sprint");
-    }
-  };
+  
+  // No longer needed here as StartSprintDialog handles it
 
   /**
    * deleteSprint is now handled by DeleteSprintDialog.
-   * Logic is inside the component script.
    */
 </script>

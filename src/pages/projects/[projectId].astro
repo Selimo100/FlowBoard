@@ -16,9 +16,13 @@ let issues: any[] = [];
 let issuesByList: Record<string, any[]> = {};
 let activeSprint: any = null;
 
-if (projectId) {
+if (projectId && Astro.locals.user) {
   try {
-    project = await ProjectService.getProjectById(projectId);
+    const p = await ProjectService.getProjectById(projectId, Astro.locals.user._id?.toString());
+    if (!p) {
+      return Astro.redirect('/projects');
+    }
+    project = p;
     issues = await IssueService.getIssuesByProject(projectId);
     const sprints = await SprintService.getAllSprints(projectId);
     activeSprint = sprints.find((s: any) => s.status === 'active');
