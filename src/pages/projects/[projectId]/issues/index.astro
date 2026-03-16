@@ -2,6 +2,7 @@
 import AppLayout from "../../../../layouts/AppLayout.astro";
 import { ProjectService } from "../../../../lib/services/project.service";
 import { IssueService } from "../../../../lib/services/issue.service";
+import { SprintService } from "../../../../lib/services/sprint.service";
 import IssueEditModal from "../../../../components/issues/IssueEditModal.astro";
 import DeleteIssueDialog from "../../../../components/issues/DeleteIssueDialog.astro";
 import type { Issue } from "../../../../lib/repositories/issue.repo";
@@ -17,6 +18,7 @@ if (projectId) {
   try {
     project = await ProjectService.getProjectById(projectId);
     issues = await IssueService.getIssuesByProject(projectId);
+    const sprints = await SprintService.getAllSprints(projectId);
     
     // Determine status based on list name
     // Assuming "Completed" list means Closed, everything else Open
@@ -26,6 +28,7 @@ if (projectId) {
       
     issues = issues.map((issue: any) => ({
       ...issue,
+      sprintName: issue.sprintId ? sprints.find((s: any) => s._id.toString() === issue.sprintId.toString())?.name || null : null,
       status: closedListIds.includes(issue.listId) ? 'closed' : 'open',
       listName: project.lists.find((l: any) => l.id === issue.listId)?.title || 'Unknown'
     }));
@@ -67,6 +70,9 @@ const filteredIssues = currentFilter === 'all'
                  <div class="px-3 py-1 bg-peach-500 text-white rounded-lg text-sm font-medium">
                     List
                  </div>
+                 <a href={`/projects/${projectId}/sprints`} class="px-3 py-1 text-ink-500 dark:text-ink-400 hover:bg-surface-100 dark:hover:bg-ink-800 rounded-lg text-sm transition-colors">
+                    Sprints
+                 </a>
             </div>
         </div>
     </div>
@@ -169,6 +175,14 @@ const filteredIssues = currentFilter === 'all'
                                     <span class="bg-surface-200/50 dark:bg-ink-800 px-1.5 py-0.5 rounded text-ink-600 dark:text-ink-300">
                                         {issue.listName}
                                     </span>
+                                    {issue.sprintName && (
+                                        <span class="bg-surface-200/50 dark:bg-ink-800 px-1.5 py-0.5 rounded text-ink-600 dark:text-ink-300 flex items-center gap-1" title="Sprint">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                                            </svg>
+                                            {issue.sprintName}
+                                        </span>
+                                    )}
                                     {issue.priority && (
                                         <span class={`ml-auto sm:ml-0 px-1.5 py-0.5 rounded font-medium ${
                                             issue.priority === 'High' ? 'text-red-600 bg-red-50 dark:bg-red-900/20' : 

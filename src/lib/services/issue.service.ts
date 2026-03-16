@@ -52,6 +52,12 @@ export const IssueService = {
     });
   },
 
+  async getUnassignedIssues(projectId: string) {
+    return await IssueRepo.findAllByProject(projectId, { 
+      $or: [{ sprintId: null }, { sprintId: { $exists: false } }] 
+    });
+  },
+
   async updateIssue(id: string, updates: Partial<Issue>) {
     // Validation
     if (updates.title !== undefined && !updates.title.trim()) {
@@ -65,6 +71,11 @@ export const IssueService = {
     // Prevent updating critical fields via generic update if needed
     // But for now allow flexibility
     return await IssueRepo.update(id, updates);
+  },
+
+  async unassignAllFromSprint(sprintId: string) {
+    if (!sprintId) return;
+    return await IssueRepo.unassignAllFromSprint(sprintId);
   },
 
   async deleteIssue(id: string) {

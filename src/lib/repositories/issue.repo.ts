@@ -8,6 +8,7 @@ export interface Issue {
   _id?: ObjectId;
   projectId: string; // Stored as string to match project.repo, though ObjectId is better in DB
   listId: string;
+  sprintId?: ObjectId | null; // Added for Sprint Management
   title: string;
   description?: string;
   priority: Priority;
@@ -71,5 +72,53 @@ export const IssueRepo = {
     if (!ObjectId.isValid(id)) return false;
     const result = await db.collection<Issue>(COLLECTION).deleteOne({ _id: new ObjectId(id) });
     return result.deletedCount === 1;
+  },
+
+  async assignToSprint(issueId: string, sprintId: string) {
+    const db = await getDb();
+    if (!ObjectId.isValid(issueId) || !ObjectId.isValid(sprintId)) return null;
+    return db.collection<Issue>(COLLECTION).updateOne(
+      { _id: new ObjectId(issueId) },
+      { $set: { sprintId: new ObjectId(sprintId), updatedAt: new Date() } }
+    );
+  },
+
+  async removeFromSprint(issueId: string) {
+    const db = await getDb();
+    if (!ObjectId.isValid(issueId)) return null;
+    return db.collection<Issue>(COLLECTION).updateOne(
+      { _id: new ObjectId(issueId) },
+      { $set: { sprintId: null, updatedAt: new Date() } }
+    );
+  },
+
+  async findAllBySprint(sprintId: string) {
+    const db = await getDb();
+    if (!ObjectId.isValid(sprintId)) return [];
+    return db.collection<Issue>(COLLECTION)
+      .find({ sprintId: new ObjectId(sprintId) })
+      .toArray();
+  },
+
+  async bulkAssignToSprint(sprintId: string, issueIds: string[]) {
+    const db = await getDb();
+    if (!ObjectId.isValid(sprintId)) return null;
+    const objectIds = issueIds.map(id => ObjectId.isValid(id) ? new ObjectId(id) : null).filter(id => id !== null) as ObjectId[];
+    if (objectIds.length === 0) return null;
+
+    return db.collection<Issue>(COLLECTION).updateMany(
+      { _id: { $in: objectIds } },
+      { $set: { sprintId: new ObjectId(sprintId), updatedAt: new Date() } }
+    );
+  },
+
+  async unassignAllFromSprint(sprintId: string) {
+    const db = await getDb();
+    if (!ObjectId.isValid(sprintId)) return null;
+
+    return db.collection<Issue>(COLLECTION).updateMany(
+      { sprintId: new ObjectId(sprintId) },
+      { $set: { sprintId: null, updatedAt: new Date() } }
+    );
   },
 };

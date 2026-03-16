@@ -14,12 +14,16 @@ const links = [
           label: "Issues",
           icon: "list",
         },
+        {
+          href: `/projects/${projectId}/sprints`,
+          label: "Sprints",
+          icon: "activity",
+        },
       ]
     : [
         // Fallback or global links if not in a project
         { href: "/board", label: "Board", icon: "kanban" },
       ]),
-  { href: "/sprints", label: "Sprints", icon: "activity" },
   { href: "/settings", label: "Settings", icon: "settings" },
 ];
 
