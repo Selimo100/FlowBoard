@@ -419,7 +419,7 @@ docker run --rm -p 10000:10000 \
   --name flowboard-app \
   -e HOST=0.0.0.0 \
   -e PORT=10000 \
-  -e MONGODB_URI="mongodb://root:M7r9UsUadPwXYZorpWCG3GY4crtBME5KmM8GHqV46PTwtH2LyYikug3aNgtG9MJQED19bmJDtXQfccbbTJ8R@host.docker.internal:27017/flowboard?authSource=admin" \
+  -e MONGODB_URI="mongodb://root:uri_connection_string" \
   -e MONGODB_DB="flowboard" \
   -e SESSION_SECRET="replace_this_with_a_long_random_secret" \
   flowboard:local
